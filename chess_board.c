@@ -12,42 +12,71 @@ SDL_Window* gSDLWindow;
 SDL_Renderer* gSDLRenderer;
 SDL_Texture* gSDLTexture;
 static int gDone;
+int WINDOW_WIDTH = 1920 / 2;
+int WINDOW_HEIGHT = 1080 / 2;
+int SQUARE_SIZE;
+int BOARD_SIZE;
 
-#define WINDOW_WIDTH (1920)
-#define WINDOW_HEIGHT (1080)
+void resize_window(int width, int height) {
+    WINDOW_WIDTH = width;
+    WINDOW_HEIGHT = height;
+    SQUARE_SIZE = WINDOW_HEIGHT / 8;
+    BOARD_SIZE = SQUARE_SIZE * 8;
+    
+    free(gFrameBuffer);
+    gFrameBuffer = (int*)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(int));
+    SDL_DestroyTexture(gSDLTexture);
+    gSDLTexture = SDL_CreateTexture(gSDLRenderer, SDL_PIXELFORMAT_ABGR8888, 
+                                   SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
+}
 
-int update(void) {
-    SDL_Event e;
-    if (SDL_PollEvent(&e)) {
-        if (e.type == SDL_EVENT_QUIT) {
-            return 0;
-        }
-        if ((e.type == SDL_EVENT_KEY_UP) && (e.key.key == SDLK_ESCAPE)) {
-            return 0;
+void draw_board(void) {
+    int board_start_x = (WINDOW_WIDTH - BOARD_SIZE) / 2;
+    
+    for (int y = 0; y < WINDOW_HEIGHT; y++) {
+        for (int x = 0; x < WINDOW_WIDTH; x++) {
+            int board_x = (x - board_start_x);
+            int board_y = y;
+            
+            if (board_x >= 0 && board_x < BOARD_SIZE && board_y < BOARD_SIZE) {
+                int square_x = board_x / SQUARE_SIZE;
+                int square_y = board_y / SQUARE_SIZE;
+                int is_white = (square_x + square_y) % 2;
+                int color = is_white ? 0xFF374E6F : 0xFFB3DEF5;
+                gFrameBuffer[y * WINDOW_WIDTH + x] = color;
+            } else {
+                gFrameBuffer[y * WINDOW_WIDTH + x] = 0xFF808080;
+            }
         }
     }
+}
 
+void update_display(void) {
     char* pix;
     int pitch;
     SDL_LockTexture(gSDLTexture, NULL, (void**)&pix, &pitch);
-    
     for (int i = 0, sp = 0, dp = 0; i < WINDOW_HEIGHT; i++, dp += WINDOW_WIDTH, sp += pitch) {
         memcpy(pix + sp, gFrameBuffer + dp, WINDOW_WIDTH * 4);
     }
-    
     SDL_UnlockTexture(gSDLTexture);
     SDL_RenderTexture(gSDLRenderer, gSDLTexture, NULL, NULL);
     SDL_RenderPresent(gSDLRenderer);
-    SDL_Delay(1);
-    return 1;
 }
 
-void render(Uint64 aTicks) {
-    for (int i = 0, c = 0; i < WINDOW_HEIGHT; i++) {
-        for (int j = 0; j < WINDOW_WIDTH; j++, c++) {
-            gFrameBuffer[c] = (int)(i * i + j * j + aTicks) | 0xff000000;
+int update(void) {
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_EVENT_QUIT || 
+            (e.type == SDL_EVENT_KEY_UP && e.key.key == SDLK_ESCAPE)) {
+            return 0;
+        }
+        if (e.type == SDL_EVENT_WINDOW_RESIZED) {
+            resize_window(e.window.data1, e.window.data2);
+            draw_board();
+            update_display();
         }
     }
+    return 1;
 }
 
 void loop(void) {
@@ -56,8 +85,6 @@ void loop(void) {
         #ifdef EMSCRIPTEN
         emscripten_cancel_main_loop();
         #endif
-    } else {
-        render(SDL_GetTicks());
     }
 }
 
@@ -66,8 +93,12 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    SQUARE_SIZE = WINDOW_HEIGHT / 8;
+    BOARD_SIZE = SQUARE_SIZE * 8;
+    
     gFrameBuffer = (int*)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(int));
-    gSDLWindow = SDL_CreateWindow("SDL3 window", WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+    gSDLWindow = SDL_CreateWindow("Chess Board", WINDOW_WIDTH, WINDOW_HEIGHT, 
+                                SDL_WINDOW_RESIZABLE);
     gSDLRenderer = SDL_CreateRenderer(gSDLWindow, NULL);
     gSDLTexture = SDL_CreateTexture(gSDLRenderer, SDL_PIXELFORMAT_ABGR8888, 
                                    SDL_TEXTUREACCESS_STREAMING, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -76,8 +107,10 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    gDone = 0;
+    draw_board();
+    update_display();
 
+    gDone = 0;
     #ifdef EMSCRIPTEN
     emscripten_set_main_loop(loop, 0, 1);
     #else

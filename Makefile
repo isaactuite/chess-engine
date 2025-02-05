@@ -1,4 +1,6 @@
 all:
-	gcc -o bouncing_ball bouncing_ball.c -Iinclude -Llib -lSDL3
+	gcc -o chess_board chess_board.c -Iinclude -Iinclude -Llib -Llib -lSDL3 -lSDL3_image
+	./chess_board.exe
+
 
 
