@@ -2,23 +2,21 @@
     "configurations": [
         {
             "name": "Win32",
-            "includePath": [
-                "${workspaceFolder}/**,",
-                "C:/msys64/home/isaac/SDL3/include",
-                "C:/msys64/home/isaac/SDL3/include/SDL3"
-            ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.19041.0",
-            "compilerPath": "cl.exe",
+            "compilerPath": "C:/MinGW/bin/gcc.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "intelliSenseMode": "windows-msvc-x64",
             "configurationProvider": "ms-vscode.makefile-tools",
-            "compilerPath": "C:/MinGW/bin/gcc.exe"
+            "includePath": [
+                "${default}",
+                "${workspaceFolder}/include"
+            ]
         }
     ],
     "version": 4
