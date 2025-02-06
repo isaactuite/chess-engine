@@ -16,7 +16,7 @@ enum {
 };
 
 // Create a board array with 100 squares (to include invalid areas)
-int board[120];
+int board[63];
 
 void setup_board() {
     // Initialize empty board
@@ -68,6 +68,9 @@ void print_board() {
     }
 }
 
+int calculateLegalMoves(){
+    
+}
 int main() {
     setup_board();
     print_board();

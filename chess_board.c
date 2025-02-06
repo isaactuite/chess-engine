@@ -4,6 +4,8 @@
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
 #include "include\SDL3_image\SDL_image.h"
+#include "defs.h"
+
 typedef struct {
     SDL_Texture* texture;
     int width;
@@ -136,6 +138,11 @@ void draw_pieces() {
     }
 }
 
+int highlight_squares(Piece selected_piece, int square_x, int square_y, int legal_moves){
+    int squares_to_highlight = legal_moves(selected_piece);
+
+}
+
 void update_display(void) {
     char* pix;
     int pitch;
@@ -164,6 +171,7 @@ int update(void) {
             draw_board();
             update_display();
         }
+
     }
     return 1;
 }
@@ -225,6 +233,7 @@ int main(int argc, char** argv) {
     load_pieces();
     draw_board();
     update_display();
+
 
     gDone = 0;
     #ifdef EMSCRIPTEN
