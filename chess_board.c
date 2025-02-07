@@ -6,24 +6,7 @@
 #include "include\SDL3_image\SDL_image.h"
 #include "defs.h"
 
-typedef struct {
-    SDL_Texture* texture;
-    int width;
-    int height;
-} ChessPiece;
 
-int* gFrameBuffer;
-SDL_Window* gSDLWindow;
-SDL_Renderer* gSDLRenderer;
-SDL_Texture* gSDLTexture;
-static int gDone;
-int WINDOW_WIDTH = 1920 / 2;
-int WINDOW_HEIGHT = 1080 / 2;
-int SQUARE_SIZE;
-int BOARD_SIZE;
-float board_start_x;
-int selected_x = 100;
-int selected_y = 100;
 // Array to hold piece textures
 ChessPiece pieces[12];  // 6 piece types * 2 colors
 
@@ -172,14 +155,12 @@ void draw_pieces() {
     }
 }
 
-//int highlight_squares(Piece selected_piece, int square_x, int square_y){
-    //int squares_to_highlight = legal_moves(selected_piece, square_x, square_y);
-//    return squares_to_highlight;
-//}
 
 void update_display(void) {
+
     char* pix;
     int pitch;
+    
     SDL_LockTexture(gSDLTexture, NULL, (void**)&pix, &pitch);
     for (int i = 0, sp = 0, dp = 0; i < WINDOW_HEIGHT; i++, dp += WINDOW_WIDTH, sp += pitch) {
         memcpy(pix + sp, gFrameBuffer + dp, WINDOW_WIDTH * 4);

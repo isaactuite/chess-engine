@@ -1,32 +1,135 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "defs.h"
 
 
-typedef enum Piece
-    {EMPTY, wp, wn, wb, wq, wk, wr, bp, bn, bb, bq, bk, br}Piece;
-enum {FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE};
-enum {RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE};
-enum {WHITE, BLACK, BOTH};
+int check_piece_color(int x, int y, char board[8][8]){
+    if (((x<0) || (y<0))||(x>7)||(y>7)){
+        return -1;
+    }
+    switch(board[x][y]){
+        case 'p':
+        case 'r':
+        case 'n':
+        case 'b':
+        case 'q':
+        case 'k':
+            //black
+            return 0;
+        case 'P':
+        case 'R':
+        case 'N':
+        case 'B':
+        case 'Q':
+        case 'K':
+            //white
+            return 1;
+        case 'o':
+            return 2;
+            printf("Checked empty square colour");
+        default:
+            return -1;
+            printf("checked invalid char");
+    }
+}
 
-enum{
-    A1 = 0, B1, C1, D1, E1, F1, G1, H1,
-    A2 = 8, B2, C2, D2, E2, F2, G2, H2,
-    A3 = 16, B3, C3, D3, E3, F3, G3, H3,
-    A4 = 24, B4, C4, D4, E4, F4, G4, H4,
-    A5 = 32, B5, C5, D5, E5, F5, G5, H5,
-    A6 = 40, B6, C6, D6, E6, F6, G6, H6,
-    A7 = 48, B7, C7, D7, E7, F7, G7, H7,
-    A8 = 56, B8, C8, D8, E8, F8, G8, H8
-};
-// Create a board array with 120 squares (to include invalid areas)
-int board[8][8] = {0};
+//function to check if a target is valid
+int is_valid_attack(int x, int y, char board[8][8], int color){
+
+    int piece_color = check_piece_color(x, y, board);
+    return piece_color == -1 ? 0 : ((piece_color != color) && (piece_color !=2));
+
+}
 
 
+//individual piece logic
+int pawn_logic(int x, int y, char board[8][8], int color){
+    int legal_pawn_moves_x[4];
+    int legal_pawn_moves_y[4];
+    int counter = 0;
+    if (color == 0){
+        //black
+        if (y==1){
+            //checks rank to see if black pawn has not moved yet
+            for(int j = 1; j<3; j++){
 
-int knight_logic(int x, int y, int *legal_knight_moves_x, int *legal_knight_moves_y){
+                if (check_piece_color(x, y+j, board) != 2){
+                    //if there is something blocking the pawns file movement, break
+                    break;
+                } else {
+                    legal_pawn_moves_x[counter] = x;
+                    legal_pawn_moves_y[counter] = y+j;
+                    counter++;
+                }
+            
+            }
+        } else{
+            if (check_piece_color(x, y+1, board) == 2){
+                //If it's not the pawns first move, check the square directly in front of it for empty square
+                legal_pawn_moves_x[counter] = x;
+                legal_pawn_moves_y[counter] = y+1;
+                counter++;
+            }
+        }
 
+        //checks for pawn captures
+        if ((check_piece_color(x-1, y+1, board) == 1) && ((x-1<=0)&&(y+1<8))){
+            legal_pawn_moves_x[counter] = x-1;
+            legal_pawn_moves_y[counter] = y+1;
+            counter++;
+        }
+        if ((check_piece_color(x+1, y+1, board) == 1) && ((x+1<=0)&&(y+1<8))){
+            legal_pawn_moves_x[counter] = x+1;
+            legal_pawn_moves_y[counter] = y+1;
+            counter++;
+        }
 
+    }else if (color == 1){
+        //white
+        if (y==6){
+            //checks rank to see if white pawn has not moved yet
+            for(int j = -1; j>-3; j--){
+
+                if (check_piece_color(x, y+j, board) != 2){
+                    //if there is something blocking the pawns file movement, break
+                    break;
+                } else {
+                    legal_pawn_moves_x[counter] = x;
+                    legal_pawn_moves_y[counter] = y+j;
+                    counter++;
+                }
+            
+            }
+        } else{
+            if (check_piece_color(x, y-1, board) == 2){
+                //If it's not the pawns first move, check the square directly in front of it for empty square
+                legal_pawn_moves_x[counter] = x;
+                legal_pawn_moves_y[counter] = y-1;
+                counter++;
+            }
+        }
+
+        //checks for pawn captures
+        if ((check_piece_color(x-1, y-1, board) == 0) && ((x-1<=0)&&(y-1<8))){
+            legal_pawn_moves_x[counter] = x-1;
+            legal_pawn_moves_y[counter] = y+1;
+            counter++;
+        }
+        if ((check_piece_color(x+1, y-1, board) == 0) && ((x+1<=0)&&(y-1<8))){
+            legal_pawn_moves_x[counter] = x+1;
+            legal_pawn_moves_y[counter] = y+1;
+            counter++;
+        }
+        
+        
+
+    }
+}
+int knight_logic(int x, int y, char board[8][8], int color){
+    int legal_knight_moves_x[8]; //8 possible knight moves
+    int legal_knight_moves_y[8];
     int counter=0;
+
     for (int i = -2; i<3; i++){
         
         if (i==0){
@@ -42,9 +145,16 @@ int knight_logic(int x, int y, int *legal_knight_moves_x, int *legal_knight_move
                 continue;
             }
             if ((x+i>=0 && x+i<=7)&&(y+j>=0 && y+j<=7)){
-                legal_knight_moves_x[counter] = x+i;
-                legal_knight_moves_y[counter] = x+j;
-                counter++;
+                if (is_valid_attack(x + i, y + j, board, color)){
+                    legal_knight_moves_x[counter] = x+i;
+                    legal_knight_moves_y[counter] = y+j; //changed x to y, don't know if itll work
+                    counter++;
+                } else if (check_piece_color(x, y, board)==2){
+                    legal_knight_moves_x[counter] = x+i;
+                    legal_knight_moves_y[counter] = y+j; //changed x to y, don't know if itll work
+                    counter++;
+                }
+
             }
         }
     }
@@ -53,13 +163,25 @@ int knight_logic(int x, int y, int *legal_knight_moves_x, int *legal_knight_move
         printf("(%d, %d)",legal_knight_moves_x[i],legal_knight_moves_y[i]);
     }
 }
-int rook_logic(int x, int y, int *legal_rook_moves_x, int *legal_rook_moves_y){
+int rook_logic(int x, int y, char board[8][8], int color){
     int counter = 0;
+    int legal_rook_moves_x[14];
+    int legal_rook_moves_y[14];
     //left
     for (int i=-1; x+i>-1; i--){
-        legal_rook_moves_x[counter]=x+i;
-        legal_rook_moves_y[counter]=y;
-        counter+=1;
+        if(check_piece_color(x, y, board[8][8]) == color){
+            break;
+        }
+        if (is_valid_attack(x + i, y, board, color)){
+            legal_rook_moves_x[counter]=x+i;
+            legal_rook_moves_y[counter]=y;
+            counter+=1;
+            break;
+        }else if (check_piece_color(x, y, board[8][8]) == 2){
+            legal_rook_moves_x[counter]=x+i;
+            legal_rook_moves_y[counter]=y;
+            counter+=1;
+            }
     }
     //up
     for (int j=-1; y+j>-1;j--){
@@ -85,7 +207,9 @@ int rook_logic(int x, int y, int *legal_rook_moves_x, int *legal_rook_moves_y){
         printf("(%d, %d)",legal_rook_moves_x[i],legal_rook_moves_y[i]);
     }
 }
-int bishop_logic(int x, int y, int *legal_bishop_moves_x, int *legal_bishop_moves_y){
+int bishop_logic(int x, int y, char board[8][8], int color){
+    int legal_bishop_moves_x[13];
+    int legal_bishop_moves_y[13];
     int counter = 0;
     //left up
     for (int i=-1; x+i>-1 && y+i>-1; i--){
@@ -116,8 +240,10 @@ int bishop_logic(int x, int y, int *legal_bishop_moves_x, int *legal_bishop_move
         printf("(%d, %d)",legal_bishop_moves_x[i],legal_bishop_moves_y[i]);
     }
 }
-int queen_logic(int x, int y, int *legal_queen_moves_x, int *legal_queen_moves_y){
+int queen_logic(int x, int y, char board[8][8], int color){
     int counter = 0;
+    int legal_queen_moves_x[27];
+    int legal_queen_moves_y[27];
      //left up
     for (int i=-1; x+i>-1 && y+i>-1; i--){
         legal_queen_moves_x[counter] = x+i;
@@ -173,24 +299,72 @@ int queen_logic(int x, int y, int *legal_queen_moves_x, int *legal_queen_moves_y
     }
 
 }
-int king_logic(int x, int y, int *legal_queen_moves_x, int *legal_queen_moves_y)
+int king_logic(int x, int y, char board[8][8], int color){
 
+    int counter = 0;
+    int legal_king_moves_x[8];
+    int legal_king_moves_y[8];
 
+    for(int i = -1;i<2; i++){
+        if (x+i>8 ||x+i<0){
+            continue;
+        }
+        for (int j =-1; j<2;j++){
+            if (x+j>8 ||x+j<0){
+                continue;
+            }else if((j == i) &&(j == 0)){
+                continue;
+            } else {
+                legal_king_moves_x[counter]=x+i;
+                legal_king_moves_y[counter]=y+j;
+                counter++;
+            }
 
-int calculateLegalMoves(){
-    int* legal_x_moves = malloc(sizeof(int)*100);
+        }
+    }
+    printf("\nPossible Moves:\n");
+    for (int i=0; i<counter; i++){
+        printf("(%d, %d)",legal_king_moves_x[i],legal_king_moves_y[i]);
+    }
 }
-int main() {
-    int legal_queen_moves_x[40];
-    int legal_queen_moves_y[40];
-    int x;
-    int y;
-    int board;
-    printf("\nWhat x:\n");
-    scanf("%d", &x);
-    printf("\nWhat y:\n");
-    scanf("%d", &y);
-    printf("%d, %d", x, y);
-    queen_logic(x, y, legal_queen_moves_x, legal_queen_moves_y);
-        return 0;
+
+
+
+int legal_moves(int x, int y, int color){
+    /*
+    Function takes in the coordinates of a piece, the current state of the board, and what color the piece is.
+    x can range from (0,7)
+    y can range from (0,7)
+    Board is a 8x8 2d matrix.
+    Color can be -1, 0, 2, 3. Invalid char is -1, black is 0, white is 1, empty is 2.
+    */
+    switch (board[x][y]){
+        case 'P': case 'p':
+            printf("Pawn Selected");
+            pawn_logic(x, y, board, color);
+            break;
+        case 'N': case 'n':
+            printf("Knight selected");
+            knight_logic(x, y, board, color);
+            break;
+        case 'B': case 'b':
+            printf("Bishop selected");
+            bishop_logic(x, y, board, color);
+            break;
+        case 'R': case 'r':
+            printf("Rook selected");
+            rook_logic(x, y, board, color);
+            break;
+        
+        case 'Q': case 'q':
+            printf("Queen selected");
+            queen_logic(x, y, board, color);
+            break;
+        case 'K': case 'k':
+            printf("King selected");
+            king_logic(x, y, board, color);
+            break;
+        default:
+            print("legal_moves called, invalid");
+    }
 }

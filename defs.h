@@ -1,53 +1,45 @@
-#ifndef DEFS_H
-#define DEFS_H
-
-typedef unsigned long long U64;
-
-#define NAME "Chess 1.0"
-#define BRD_SQ_NUM 120
-
-typedef enum Piece
-    {EMPTY, wp, wn, wb, wq, wk, wr, bp, bn, bb, bq, bk, br}Piece;
-enum {FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H, FILE_NONE};
-enum {RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE};
-enum {WHITE, BLACK, BOTH};
-
-enum{
-    A1 = 21, B1, C1, D1, E1, F1, G1, H1,
-    A2 = 31, B2, C2, D2, E2, F2, G2, H2,
-    A3 = 41, B3, C3, D3, E3, F3, G3, H3,
-    A4 = 51, B4, C4, D4, E4, F4, G4, H4,
-    A5 = 61, B5, C5, D5, E5, F5, G5, H5,
-    A6 = 71, B6, C6, D6, E6, F6, G6, H6,
-    A7 = 81, B7, C7, D7, E7, F7, G7, H7,
-    A8 = 91, B8, C8, D8, E8, F8, G8, H8, NO_SQ
-};
-
-enum{TRUE, FALSE};
-
-typedef struct {
-    int pieces[BRD_SQ_NUM];
-    U64 pawns[3];
-
-    int KingSq[2];
-
-    int side;
-    int enPas;
-    int fiftyMove;
-
-    U64 posKey;
-
-    int pieceNumber[13];
-    int bigPieces;
-    int majorPieces;
-    int minPieces;
-    
-}S_BOARD;
 
 typedef struct {
     int board_start_x;
 } X_Start_Coords;
-#endif
 
-//MACRO
-#define fr2SQ(f, r) ((21+ (f)) + ((r) * 10))
+typedef struct {
+    SDL_Texture* texture;
+    int width;
+    int height;
+} ChessPiece;
+
+int* gFrameBuffer;
+SDL_Window* gSDLWindow;
+SDL_Renderer* gSDLRenderer;
+SDL_Texture* gSDLTexture;
+static int gDone;
+
+int WINDOW_WIDTH = 1920 / 2;
+int WINDOW_HEIGHT = 1080 / 2;
+
+int SQUARE_SIZE;
+int BOARD_SIZE;
+
+float board_start_x;
+
+int selected_x = 100;
+int selected_y = 100;
+
+int castling_rights_QS = 1;
+int castling_rights_KS = 1;
+int castling_rights_qs = 1;
+int castling_rights_ks = 1;
+
+// Create a board array with 120 squares (to include invalid areas)
+char board[8][8] = {
+    {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},  // Black pieces (top row)
+    {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},  // Black pawns
+    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
+    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
+    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
+    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
+    {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},  // White pawns
+    {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}   // White pieces (bottom row)
+};
+
