@@ -1,5 +1,5 @@
 #include <string.h>
-#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
@@ -21,10 +21,14 @@ int WINDOW_WIDTH = 1920 / 2;
 int WINDOW_HEIGHT = 1080 / 2;
 int SQUARE_SIZE;
 int BOARD_SIZE;
-
+float board_start_x;
+int selected_x = 100;
+int selected_y = 100;
 // Array to hold piece textures
 ChessPiece pieces[12];  // 6 piece types * 2 colors
 
+void draw_board();
+void update_display();
 // Load a piece texture and store its dimensions
 ChessPiece load_piece(const char* path) {
     ChessPiece piece = {0};
@@ -43,6 +47,35 @@ ChessPiece load_piece(const char* path) {
     return piece;
 }
 
+void select_square(float x, float y){
+    if (x>=board_start_x && x<=board_start_x+BOARD_SIZE){
+        float x_relative = x-board_start_x;
+        int rank = x_relative/SQUARE_SIZE;
+        int file = y/SQUARE_SIZE;
+        printf("\nClicked on: %d, %d", rank, file);
+        selected_x=rank;
+        selected_y=file;
+        
+    }
+
+}
+void handle_mouse_event(SDL_Event *e) {
+    if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        printf("\nMouse button %d pressed at (%.2f, %.2f)\n", 
+               e->button.button, e->button.x, e->button.y);
+        
+        // Handle piece selection or interaction
+    }
+    if (e->type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        printf("\nMouse button %d released at (%.2f, %.2f)\n", 
+               e->button.button, e->button.x, e->button.y);
+        select_square(e->button.x, e->button.y);
+        
+        draw_board();
+        update_display();
+        // Handle piece drop or move confirmation
+    }
+}
 void load_pieces() {
     const char* piece_files[] = {
         "assets/images/wp.png", "assets/images/wr.png", "assets/images/wn.png",
@@ -72,7 +105,6 @@ void resize_window(int width, int height) {
     WINDOW_HEIGHT = height;
     SQUARE_SIZE = WINDOW_HEIGHT / 8;
     BOARD_SIZE = SQUARE_SIZE * 8;
-    
     free(gFrameBuffer);
     gFrameBuffer = (int*)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * sizeof(int));
     if (!gFrameBuffer) {
@@ -85,18 +117,21 @@ void resize_window(int width, int height) {
     if (!gSDLTexture) {
         SDL_Log("Failed to create texture: %s", SDL_GetError());
     }
+    
 }
 
 void draw_board(void) {
-    int board_start_x = (WINDOW_WIDTH - BOARD_SIZE) / 2;
-    
+    board_start_x = (WINDOW_WIDTH - BOARD_SIZE) / 2;
+    printf("\ndrawing board. selected tile: %d, %d\n", selected_x, selected_y);
     // Draw board squares
     for (int y = 0; y < WINDOW_HEIGHT; y++) {
         for (int x = 0; x < WINDOW_WIDTH; x++) {
             int board_x = (x - board_start_x);
             int board_y = y;
-            
-            if (board_x >= 0 && board_x < BOARD_SIZE && board_y < BOARD_SIZE) {
+            if (((x >= (selected_x * SQUARE_SIZE)+board_start_x) && (x < (selected_x + 1) * SQUARE_SIZE+board_start_x))
+                && ((y >= selected_y * SQUARE_SIZE) && (y < (selected_y + 1) * SQUARE_SIZE))) {
+                gFrameBuffer[y * WINDOW_WIDTH + x] = 0xAA6666FF;  // Highlight color
+            }else if (board_x >= 0 && board_x < BOARD_SIZE && board_y < BOARD_SIZE) {
                 int square_x = board_x / SQUARE_SIZE;
                 int square_y = board_y / SQUARE_SIZE;
                 int is_black = (square_x + square_y) % 2;
@@ -112,7 +147,6 @@ void draw_board(void) {
 void draw_piece(int piece_index, int square_x, int square_y) {
     if (!pieces[piece_index].texture) return;
     
-    int board_start_x = (WINDOW_WIDTH - BOARD_SIZE) / 2;
     SDL_FRect dest = {
         board_start_x + square_x * SQUARE_SIZE,
         square_y * SQUARE_SIZE,
@@ -138,10 +172,10 @@ void draw_pieces() {
     }
 }
 
-int highlight_squares(Piece selected_piece, int square_x, int square_y, int legal_moves){
-    int squares_to_highlight = legal_moves(selected_piece);
-
-}
+//int highlight_squares(Piece selected_piece, int square_x, int square_y){
+    //int squares_to_highlight = legal_moves(selected_piece, square_x, square_y);
+//    return squares_to_highlight;
+//}
 
 void update_display(void) {
     char* pix;
@@ -171,8 +205,12 @@ int update(void) {
             draw_board();
             update_display();
         }
-
+        if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            handle_mouse_event(&e);
+        }
     }
+
+
     return 1;
 }
 

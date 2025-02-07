@@ -13,7 +13,7 @@ enum {RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8, RANK_NONE}
 enum {WHITE, BLACK, BOTH};
 
 enum{
-    A1 = 21, B1, C2, D1, E1, F1, G1, H1,
+    A1 = 21, B1, C1, D1, E1, F1, G1, H1,
     A2 = 31, B2, C2, D2, E2, F2, G2, H2,
     A3 = 41, B3, C3, D3, E3, F3, G3, H3,
     A4 = 51, B4, C4, D4, E4, F4, G4, H4,
@@ -43,5 +43,11 @@ typedef struct {
     int minPieces;
     
 }S_BOARD;
+
+typedef struct {
+    int board_start_x;
+} X_Start_Coords;
 #endif
 
+//MACRO
+#define fr2SQ(f, r) ((21+ (f)) + ((r) * 10))
