@@ -1,3 +1,8 @@
+#ifndef DEFS_H
+#define DEFS_H
+
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_image.h>
 
 typedef struct {
     int board_start_x;
@@ -9,37 +14,38 @@ typedef struct {
     int height;
 } ChessPiece;
 
-int* gFrameBuffer;
-SDL_Window* gSDLWindow;
-SDL_Renderer* gSDLRenderer;
-SDL_Texture* gSDLTexture;
-static int gDone;
+extern int* gFrameBuffer;
+extern SDL_Window* gSDLWindow;
+extern SDL_Renderer* gSDLRenderer;
+extern SDL_Texture* gSDLTexture;
+extern int gDone;
 
-int WINDOW_WIDTH = 1920 / 2;
-int WINDOW_HEIGHT = 1080 / 2;
+extern int WINDOW_WIDTH;
+extern int WINDOW_HEIGHT;
 
-int SQUARE_SIZE;
-int BOARD_SIZE;
+extern int SQUARE_SIZE;
+extern int BOARD_SIZE;
+extern float board_start_x;
 
-float board_start_x;
+extern int selected_x;
+extern int selected_y;
 
-int selected_x = 100;
-int selected_y = 100;
+extern int castling_rights_QS;
+extern int castling_rights_KS;
+extern int castling_rights_qs;
+extern int castling_rights_ks;
+extern int turn_color; //1=white, 0=black
+extern int turn_count; //pair values
 
-int castling_rights_QS = 1;
-int castling_rights_KS = 1;
-int castling_rights_qs = 1;
-int castling_rights_ks = 1;
+extern int en_passant_x;
+extern int en_passant_y;
 
-// Create a board array with 120 squares (to include invalid areas)
-char board[8][8] = {
-    {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},  // Black pieces (top row)
-    {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},  // Black pawns
-    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
-    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
-    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
-    {'o', 'o', 'o', 'o', 'o', 'o', 'o', 'o'},  // Empty row
-    {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},  // White pawns
-    {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}   // White pieces (bottom row)
-};
+extern int is_selected_piece;
 
+
+extern int highlighted_squares_x[32];
+extern int highlighted_squares_y[32];
+
+extern char board[8][8];
+
+#endif // DEFS_H

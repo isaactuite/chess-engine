@@ -5,11 +5,12 @@
 #include "SDL3/SDL_main.h"
 #include "include\SDL3_image\SDL_image.h"
 #include "defs.h"
+#include "game_logic.h"
 
 
 // Array to hold piece textures
 ChessPiece pieces[12];  // 6 piece types * 2 colors
-
+void draw_pieces();
 void draw_board();
 void update_display();
 // Load a piece texture and store its dimensions
@@ -30,33 +31,63 @@ ChessPiece load_piece(const char* path) {
     return piece;
 }
 
+int get_tile_x(float x){
+    if (x>=board_start_x && x<=board_start_x+BOARD_SIZE){
+        printf("board_start_x: %d\n",board_start_x);
+        float x_relative = x-board_start_x;
+        printf("relative_x", x_relative);
+        return x_relative/SQUARE_SIZE;
+        
+    }
+}
+int get_tile_y(float y){
+        return y/SQUARE_SIZE;
+}
+
 void select_square(float x, float y){
     if (x>=board_start_x && x<=board_start_x+BOARD_SIZE){
-        float x_relative = x-board_start_x;
-        int rank = x_relative/SQUARE_SIZE;
-        int file = y/SQUARE_SIZE;
-        printf("\nClicked on: %d, %d", rank, file);
-        selected_x=rank;
-        selected_y=file;
+        selected_x=get_tile_x(x);
+        selected_y=get_tile_y(y);
+        printf("selected_x: %d", selected_x);
+        printf("selected_y: %d", selected_y);
+
+        draw_board();
+        legal_moves(selected_x, selected_y);
         
+        update_display();
     }
 
 }
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        printf("\nMouse button %d pressed at (%.2f, %.2f)\n", 
-               e->button.button, e->button.x, e->button.y);
-        
-        // Handle piece selection or interaction
-    }
-    if (e->type == SDL_EVENT_MOUSE_BUTTON_UP) {
         printf("\nMouse button %d released at (%.2f, %.2f)\n", 
                e->button.button, e->button.x, e->button.y);
-        select_square(e->button.x, e->button.y);
         
-        draw_board();
-        update_display();
-        // Handle piece drop or move confirmation
+        if (is_selected_piece == 1){
+            for (int i=0; i<highlighted_squares_x[0]; i++){
+
+                if ((highlighted_squares_x[i+1]==get_tile_x(e->button.x)) && (highlighted_squares_y[i+1]==get_tile_y(e->button.y))){
+                    board[get_tile_x(e->button.x)][get_tile_y(e->button.y)] = board[selected_x][selected_y];
+                    board[selected_x][selected_y] = 'o';
+                    selected_x = -1;
+                    selected_y = -1;
+                    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
+                    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
+                    draw_board();
+                    draw_pieces();
+                    update_display();
+                    is_selected_piece = 0;
+                }
+
+            }
+            is_selected_piece=0;
+        }
+        if (is_selected_piece == 0){
+        select_square(e->button.x, e->button.y);
+        is_selected_piece = 1;
+        }
+
+
     }
 }
 void load_pieces() {
@@ -66,7 +97,7 @@ void load_pieces() {
         "assets/images/bp.png", "assets/images/br.png", "assets/images/bn.png",
         "assets/images/bb.png", "assets/images/bq.png", "assets/images/bk.png"
     };
-    
+
     for (int i = 0; i < 12; i++) {
         pieces[i] = load_piece(piece_files[i]);
         if (!pieces[i].texture) {
@@ -74,7 +105,6 @@ void load_pieces() {
         }
     }
 }
-
 void cleanup_pieces() {
     for (int i = 0; i < 12; i++) {
         if (pieces[i].texture) {
@@ -82,7 +112,6 @@ void cleanup_pieces() {
         }
     }
 }
-
 void resize_window(int width, int height) {
     WINDOW_WIDTH = width;
     WINDOW_HEIGHT = height;
@@ -103,6 +132,8 @@ void resize_window(int width, int height) {
     
 }
 
+
+
 void draw_board(void) {
     board_start_x = (WINDOW_WIDTH - BOARD_SIZE) / 2;
     printf("\ndrawing board. selected tile: %d, %d\n", selected_x, selected_y);
@@ -113,7 +144,7 @@ void draw_board(void) {
             int board_y = y;
             if (((x >= (selected_x * SQUARE_SIZE)+board_start_x) && (x < (selected_x + 1) * SQUARE_SIZE+board_start_x))
                 && ((y >= selected_y * SQUARE_SIZE) && (y < (selected_y + 1) * SQUARE_SIZE))) {
-                gFrameBuffer[y * WINDOW_WIDTH + x] = 0xAA6666FF;  // Highlight color
+                gFrameBuffer[y * WINDOW_WIDTH + x] = 0x806666FF;  // Highlight color
             }else if (board_x >= 0 && board_x < BOARD_SIZE && board_y < BOARD_SIZE) {
                 int square_x = board_x / SQUARE_SIZE;
                 int square_y = board_y / SQUARE_SIZE;
@@ -127,9 +158,49 @@ void draw_board(void) {
     }
 }
 
-void draw_piece(int piece_index, int square_x, int square_y) {
-    if (!pieces[piece_index].texture) return;
-    
+void draw_piece(int piece_char, int square_x, int square_y) {
+
+    int piece_index;
+    switch (piece_char){
+        case 'p':
+            piece_index=6;
+            break;
+        case 'r':
+            piece_index=7;
+            break;
+        case 'n':
+            piece_index=8;
+            break;
+        case 'b':
+            piece_index=9;
+            break;
+        case 'q':
+            piece_index=10;
+            break;
+        case 'k':
+            piece_index=11;
+            break;
+        case 'P':
+            piece_index=0;
+            break;
+        case 'R':
+            piece_index=1;
+            break;
+        case 'N':
+            piece_index=2;
+            break;
+        case 'B':
+            piece_index=3;
+            break;
+        case 'Q':
+            piece_index=4;
+            break;
+        case 'K':
+            piece_index=5;
+            break;
+        default:
+            return;
+    }
     SDL_FRect dest = {
         board_start_x + square_x * SQUARE_SIZE,
         square_y * SQUARE_SIZE,
@@ -140,18 +211,12 @@ void draw_piece(int piece_index, int square_x, int square_y) {
 }
 
 void draw_pieces() {
-    // Draw initial board position
-    // Pawns
-    for (int i = 0; i < 8; i++) {
-        draw_piece(0, i, 6);  // White pawns
-        draw_piece(6, i, 1);  // Black pawns
-    }
-    
-    // Other pieces
-    int piece_order[] = {1, 2, 3, 4, 5, 3, 2, 1};  // rook, knight, bishop, queen, king, bishop, knight, rook
-    for (int i = 0; i < 8; i++) {
-        draw_piece(piece_order[i], i, 7);        // White pieces
-        draw_piece(piece_order[i] + 6, i, 0);    // Black pieces
+    // Draw board position
+
+    for (int i=0;i<8; i++){
+        for (int j=0;j<8;j++){
+            draw_piece(board[i][j], i, j);
+        }
     }
 }
 
@@ -194,7 +259,6 @@ int update(void) {
 
     return 1;
 }
-
 void loop(void) {
     if (!update()) {
         gDone = 1;
@@ -203,7 +267,6 @@ void loop(void) {
         #endif
     }
 }
-
 int main(int argc, char** argv) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
