@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "sdl_image.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "defs.h": "c"
     }
 }

@@ -44,50 +44,113 @@ int get_tile_y(float y){
         return y/SQUARE_SIZE;
 }
 
-void select_square(float x, float y){
-    if (x>=board_start_x && x<=board_start_x+BOARD_SIZE){
-        selected_x=get_tile_x(x);
-        selected_y=get_tile_y(y);
-        printf("selected_x: %d", selected_x);
-        printf("selected_y: %d", selected_y);
+void select_square(float x, float y) {
+    // Ensure the click is within the bounds of the board
+    if (x >= board_start_x && x <= board_start_x + BOARD_SIZE &&
+        y >= 0 && y <= BOARD_SIZE) {
 
-        draw_board();
+        // Get selected square indices
+        selected_x = get_tile_x(x); // Column index (0–7)
+        selected_y = get_tile_y(y); // Row index (0–7)
+
+        // Get top-left corner pixel position of the selected square
+        int board_x = selected_x * SQUARE_SIZE + board_start_x;
+        int board_y = selected_y * SQUARE_SIZE;
+
+        // Highlight the selected square in the framebuffer
+        for (int dy = board_y; dy < board_y + SQUARE_SIZE && dy < WINDOW_HEIGHT; dy++) {
+            for (int dx = board_x; dx < board_x + SQUARE_SIZE && dx < WINDOW_WIDTH; dx++) {
+                gFrameBuffer[dy * WINDOW_WIDTH + dx] = 0x80FF80FF; // Highlight color (light green)
+            }
+        }
+
+        // Compute and highlight legal moves
         legal_moves(selected_x, selected_y);
-        
+
+        // Update display
         update_display();
     }
+}
 
+
+int check_en_passant(int selected_y, int clicked_y){
+    if (abs(selected_y - clicked_y) == 2){
+        return 1;
+    } else{
+        return 0;
+    }
 }
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        printf("\nMouse button %d released at (%.2f, %.2f)\n", 
-               e->button.button, e->button.x, e->button.y);
-        
-        if (is_selected_piece == 1){
-            for (int i=0; i<highlighted_squares_x[0]; i++){
+        int clicked_x = get_tile_x(e->button.x);
+        int clicked_y = get_tile_y(e->button.y);
 
-                if ((highlighted_squares_x[i+1]==get_tile_x(e->button.x)) && (highlighted_squares_y[i+1]==get_tile_y(e->button.y))){
-                    board[get_tile_x(e->button.x)][get_tile_y(e->button.y)] = board[selected_x][selected_y];
+        // Check if a piece of the correct color is selected
+        if (is_selected_piece == 0) {
+            if (check_piece_color(clicked_x, clicked_y) == turn_color) {
+                select_square(e->button.x, e->button.y); // Highlight legal moves
+                is_selected_piece = 1;
+            }
+            return;
+        }
+
+        // Handle move to highlighted square
+        if (is_selected_piece == 1) {
+            for (int i = 0; i < highlighted_squares_x[0]; i++) {
+                if (highlighted_squares_x[i + 1] == clicked_x && highlighted_squares_y[i + 1] == clicked_y) {
+                    // Perform move
+                    board[clicked_x][clicked_y] = board[selected_x][selected_y];
                     board[selected_x][selected_y] = 'o';
-                    selected_x = -1;
-                    selected_y = -1;
+                    if (board[clicked_x][clicked_y] == 'p' || board[clicked_x][clicked_y] == 'P'){
+
+                        if (check_en_passant(selected_y, clicked_y)){
+                            en_passant_x=clicked_x;
+                            en_passant_y=clicked_y;
+                        }
+                        if (en_passant_x){
+                            if (check_piece_color(clicked_x, clicked_y)==0){
+                                //white
+                                if (clicked_x == en_passant_x && clicked_y==en_passant_y-1){
+                                    board[clicked_x][en_passant_y] = 'o';
+                                }
+                            }
+                            if (check_piece_color(clicked_x, clicked_y)==1){
+                                //white
+                                if (clicked_x == en_passant_x && clicked_y==en_passant_y+1){
+                                    board[clicked_x][en_passant_y] = 'o';
+
+                                }
+                            }
+                        }
+                    }
+                    
+
+                    // Clear highlight arrays
                     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
                     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
+
+                    // Redraw the board and pieces
                     draw_board();
                     draw_pieces();
                     update_display();
+
+                    // Switch player turn
+                    turn_color = !turn_color;
+
+                    // Reset selection
+                    selected_x = -1;
+                    selected_y = -1;
                     is_selected_piece = 0;
+                    return;
                 }
-
             }
-            is_selected_piece=0;
-        }
-        if (is_selected_piece == 0){
-        select_square(e->button.x, e->button.y);
-        is_selected_piece = 1;
-        }
 
-
+            // If click is not a legal move, deselect
+            is_selected_piece = 0;
+            draw_board();
+            draw_pieces();
+            update_display();
+        }
     }
 }
 void load_pieces() {
@@ -142,10 +205,7 @@ void draw_board(void) {
         for (int x = 0; x < WINDOW_WIDTH; x++) {
             int board_x = (x - board_start_x);
             int board_y = y;
-            if (((x >= (selected_x * SQUARE_SIZE)+board_start_x) && (x < (selected_x + 1) * SQUARE_SIZE+board_start_x))
-                && ((y >= selected_y * SQUARE_SIZE) && (y < (selected_y + 1) * SQUARE_SIZE))) {
-                gFrameBuffer[y * WINDOW_WIDTH + x] = 0x806666FF;  // Highlight color
-            }else if (board_x >= 0 && board_x < BOARD_SIZE && board_y < BOARD_SIZE) {
+            if (board_x >= 0 && board_x < BOARD_SIZE && board_y < BOARD_SIZE) {
                 int square_x = board_x / SQUARE_SIZE;
                 int square_y = board_y / SQUARE_SIZE;
                 int is_black = (square_x + square_y) % 2;

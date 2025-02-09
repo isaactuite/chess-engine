@@ -41,11 +41,19 @@ extern int en_passant_x;
 extern int en_passant_y;
 
 extern int is_selected_piece;
+extern int bking_x;
+extern int bking_y;
+
+extern int wking_x;
+extern int wking_y;
+
+extern int piece_logic_for_moving;
 
 
 extern int highlighted_squares_x[32];
 extern int highlighted_squares_y[32];
 
 extern char board[8][8];
+extern char fake_board[8][8];
 
 #endif // DEFS_H
