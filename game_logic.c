@@ -17,14 +17,20 @@ int is_in_check(int current_x, int current_y, int color){
         for (int j=0; j<8; j++){
             if (color == 0){
                 switch (board[i][j]){
-                    case 'P':
-                        pawn_logic(current_x,current_y,color);
-                    case 'R':
-                        
-                    case 'N':
-                    case 'B':
-                    case 'Q':
                     case 'K':
+                    king_logic(current_x,current_y,color);
+                    case 'Q':
+                    queen_logic(current_x,current_y,color);
+                    case 'P':
+                    pawn_logic(current_x,current_y,color);
+                    case 'R':
+                    rook_logic(current_x,current_y,color);
+                    case 'N':
+                    knight_logic(current_x,current_y,color);
+                    case 'B':
+                    bishop_logic(current_x,current_y,color);
+
+
                 }
             }
         }
@@ -96,7 +102,6 @@ int pawn_logic(int x, int y, int color){
     int legal_pawn_moves_x[8];
     int legal_pawn_moves_y[8];
     int counter = 0;
-    
     if (color == 1){
         //black
         if (y==1){
@@ -106,13 +111,17 @@ int pawn_logic(int x, int y, int color){
                 if (check_piece_color(x, y+j) != 2){
                     //if there is something blocking the pawns file movement, break
                     break;
+
                 } else if (!piece_logic_for_moving){
-                    if (is_in_check(x, y, color)){
-                        legal_pawn_moves_x[counter] = x;
-                        legal_pawn_moves_y[counter] = y+j;
-                        counter++;
-                    }
+                        squares_under_attack_x[sim_counter] = x;
+                        squares_under_attack_y[sim_counter] = y+j;
+                        squares_under_attack_x[0]=sim_counter;
+                        squares_under_attack_y[0]=sim_counter;
+                        sim_counter++;
+                    
+
                 } else if (piece_logic_for_moving){
+                    if (is_in_check(x, y, color))
                     legal_pawn_moves_x[counter] = x;
                     legal_pawn_moves_y[counter] = y+j;
                     counter++;

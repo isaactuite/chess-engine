@@ -45,6 +45,7 @@ int wking_x = 4;
 int wking_y = 7;
 
 int piece_logic_for_moving = 1;
+int sim_counter = 1;
 
 char board[8][8] = {
     {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'},  // File A
