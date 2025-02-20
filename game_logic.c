@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "game_logic.h"
 
+
 void update_fake_board(){
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
@@ -11,26 +12,25 @@ void update_fake_board(){
     }
 }
 
+
 int is_in_check(int current_x, int current_y, int color){
+    //before any legal move is calculated, this function is called to determine whether if the piece moves there, it will be in check.
+    //it does this by going through every possible move from the other color, and if any of those moves include the position of the King, then the move is illegal.
     piece_logic_for_moving = 0;
     for (int i = 0; i<8; i++){
         for (int j=0; j<8; j++){
             if (color == 0){
                 switch (board[i][j]){
-                    case 'K':
-                    king_logic(current_x,current_y,color);
                     case 'Q':
-                    queen_logic(current_x,current_y,color);
+                    queen_logic(current_x,current_y,1);
                     case 'P':
-                    pawn_logic(current_x,current_y,color);
+                    pawn_logic(current_x,current_y,1);
                     case 'R':
-                    rook_logic(current_x,current_y,color);
+                    rook_logic(current_x,current_y,1);
                     case 'N':
-                    knight_logic(current_x,current_y,color);
+                    knight_logic(current_x,current_y,1);
                     case 'B':
-                    bishop_logic(current_x,current_y,color);
-
-
+                    bishop_logic(current_x,current_y,1);
                 }
             }
         }
@@ -52,6 +52,22 @@ void highlight_legal_moves(int x, int y) {
             gFrameBuffer[dy * WINDOW_WIDTH + dx] = 0xFFFF80FF;
         }
     }
+}
+
+void highlighted_squares(int x, int y, int counter){
+    highlighted_squares_x[counter] = x;
+    highlighted_squares_y[counter] = y;
+    highlighted_squares_x[0] = counter;
+    highlighted_squares_y[0] = counter;
+
+}
+
+void squares_under_attack(int x, int y){
+    squares_under_attack_x[sim_counter] = x;
+    squares_under_attack_y[sim_counter] = y;
+    squares_under_attack_x[0]=sim_counter;
+    squares_under_attack_y[0]=sim_counter;
+    sim_counter++;
 }
 
 int check_piece_color(int x, int y){
@@ -99,9 +115,9 @@ int is_valid_attack(int x, int y, int color){
 
 //individual piece logic
 int pawn_logic(int x, int y, int color){
-    int legal_pawn_moves_x[8];
-    int legal_pawn_moves_y[8];
-    int counter = 0;
+    int counter = 1;
+    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
+    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
     if (color == 1){
         //black
         if (y==1){
@@ -111,55 +127,65 @@ int pawn_logic(int x, int y, int color){
                 if (check_piece_color(x, y+j) != 2){
                     //if there is something blocking the pawns file movement, break
                     break;
-
-                } else if (!piece_logic_for_moving){
-                        squares_under_attack_x[sim_counter] = x;
-                        squares_under_attack_y[sim_counter] = y+j;
-                        squares_under_attack_x[0]=sim_counter;
-                        squares_under_attack_y[0]=sim_counter;
-                        sim_counter++;
-                    
-
+                //don't have to check for check here, because it's not a capture
                 } else if (piece_logic_for_moving){
-                    if (is_in_check(x, y, color))
-                    legal_pawn_moves_x[counter] = x;
-                    legal_pawn_moves_y[counter] = y+j;
-                    counter++;
+                    if (!is_in_check(x, y, color)){
+                        highlighted_squares(x, y+j, counter);
+                        counter++;
+                    }
                 }
             
             }
-        } else{
+        }
+
+        if(piece_logic_for_moving) {
             if (check_piece_color(x, y+1) == 2){
                 //If it's not the pawns first move, check the square directly in front of it for empty square
-                legal_pawn_moves_x[counter] = x;
-                legal_pawn_moves_y[counter] = y+1;
-                counter++;
+                if (!is_in_check(x, y, color)){
+                    highlighted_squares(x, y+1, counter);
+                    counter++;
+                }
             }
         }
 
         //checks for pawn captures
         if ((check_piece_color(x-1, y+1) == 0) && ((x-1>=0)&&(y+1<8))){
-            legal_pawn_moves_x[counter] = x-1;
-            legal_pawn_moves_y[counter] = y+1;
-            counter++;
+            if (!piece_logic_for_moving){
+                        squares_under_attack(x-1, y+1);
+            }else if (piece_logic_for_moving){
+                if (!is_in_check(x, y, color)){
+                    highlighted_squares(x-1, y+1, counter);
+                    counter++;
+                }
+            }
         }
-        if ((check_piece_color(x+1, y+1) == 0) && ((x+1>=0)&&(y+1<8))){
-            legal_pawn_moves_x[counter] = x+1;
-            legal_pawn_moves_y[counter] = y+1;
-            counter++;
+        if ((check_piece_color(x-1, y+1) == 0) && ((x-1>=0)&&(y+1<8))){
+            if (!piece_logic_for_moving){
+                squares_under_attack(x+1, y+1);
+            }else if (piece_logic_for_moving){
+                if (!is_in_check(x, y, color)){
+                    highlighted_squares(x+1, y+1, counter);
+                    counter++;
+                }
+            }
         }
-        if ((en_passant_x == x+1)  && (en_passant_y == y)){
-            legal_pawn_moves_x[counter] = x+1;
-            legal_pawn_moves_y[counter] = y+1;
-            counter++;
+        if (piece_logic_for_moving){
+            if ((en_passant_x == x+1)  && (en_passant_y == y)){
+                if (!is_in_check(x, y, color)){
+                    highlighted_squares(x+1, y+1, counter);
+                    counter++;
+                }
+            }
+            if ((en_passant_x == x-1)  && (en_passant_y == y)){
+                if (!is_in_check(x, y, color)){
+                    highlighted_squares(x-1, y+1, counter);
+                    counter++;
+                }
+            }
         }
-        if ((en_passant_x == x-1)  && (en_passant_y == y)){
-            legal_pawn_moves_x[counter] = x-1;
-            legal_pawn_moves_y[counter] = y+1;
-            counter++;
-        }
-
-    }else if (color == 0){
+    
+    }
+    else if (color == 0){
         //white
         if (y==6){
             //checks rank to see if white pawn has not moved yet
@@ -169,68 +195,75 @@ int pawn_logic(int x, int y, int color){
                     //if there is something blocking the pawns file movement, break
 
                     break;
-                } else {
-                    legal_pawn_moves_x[counter] = x;
-                    legal_pawn_moves_y[counter] = y+j;
+                }else if (piece_logic_for_moving){
+                    if (!is_in_check(x, y, color))
+                    highlighted_squares(x, y+j, counter);
                     counter++;
                 }
             
             }
-        } else{
-            if (check_piece_color(x, y-1) == 2){
-                //If it's not the pawns first move, check the square directly in front of it for empty square
-                legal_pawn_moves_x[counter] = x;
-                legal_pawn_moves_y[counter] = y-1;
-                counter++;
+        }if(piece_logic_for_moving) {
+            if (check_piece_color(x, y+1) == 2){
+                if (!is_in_check(x, y, color)){
+                    //If it's not the pawns first move, check the square directly in front of it for empty square
+                    highlighted_squares(x, y-1, counter);
+                    counter++;
+                }
             }
         }
 
         //checks for pawn captures
-        if ((check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1<8))){
-            legal_pawn_moves_x[counter] = x-1;
-            legal_pawn_moves_y[counter] = y-1;
-            counter++;
-        }
-        if ((check_piece_color(x+1, y-1) == 1) && ((x+1>=0)&&(y-1<8))){
-            legal_pawn_moves_x[counter] = x+1;
-            legal_pawn_moves_y[counter] = y-1;
-            counter++;
-        }
-        if ((en_passant_x == x+1)  && (en_passant_y == y)){
-            legal_pawn_moves_x[counter] = x+1;
-            legal_pawn_moves_y[counter] = y-1;
-            counter++;
-        }
-        if ((en_passant_x == x-1)  && (en_passant_y == y)){
-            legal_pawn_moves_x[counter] = x-1;
-            legal_pawn_moves_y[counter] = y-1;
-            counter++;
-        }
-        
+        if ((check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1>=0))){
+            if (!piece_logic_for_moving){
+                squares_under_attack(x-1, y-1);
+            }else if (piece_logic_for_moving){
+                if(!is_in_check(x, y, color)){
+                    highlighted_squares(x-1, y-1, counter);
 
-        
+                    counter++;
+                }
+            }
+        }
+        if ((check_piece_color(x+1, y-1) == 1) && ((x+1>=0)&&(y-1>=0))){
+            if (!piece_logic_for_moving){
+                squares_under_attack(x+1, y-1);
+            }else if (piece_logic_for_moving){
+                if (!is_in_check(x,y,color)){
+                    highlighted_squares(x+1, y-1, counter);
+                    counter++;
+                }
+            }
+        }
+        if (piece_logic_for_moving){
+            if ((en_passant_x == x+1)  && (en_passant_y == y)){
+                if (!is_in_check(x, y, color))
+                highlighted_squares(x+1, y-1, counter);
+
+                counter++;
+            }
+            if ((en_passant_x == x-1)  && (en_passant_y == y)){
+                highlighted_squares(x-1, y-1, counter);
+                counter++;
+            }
+        }
     }
-    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
-    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y)); //sets every value in the array to -1
+
 
     printf("\nCounter: %d", counter);
     printf("\nPossible Moves:\n");
 
-    highlighted_squares_x[0] = counter;
-    highlighted_squares_y[0] = counter;
 
-    for (int i=0; i<counter; i++){
-        printf("(%d, %d)",legal_pawn_moves_x[i],legal_pawn_moves_y[i]);
-        highlight_legal_moves(legal_pawn_moves_x[i],legal_pawn_moves_y[i]);
-        highlighted_squares_x[i+1] = legal_pawn_moves_x[i];
-        highlighted_squares_y[i+1] = legal_pawn_moves_y[i];
+    for (int i=1; i<counter+1; i++){
+        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
     }
-    
+
 }
+
 int knight_logic(int x, int y, int color){
-    int legal_knight_moves_x[8]; //8 possible knight moves
-    int legal_knight_moves_y[8];
-    int counter=0;
+    
+    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
+    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
+    int counter=1;
 
     for (int i = -2; i<3; i++){
         
@@ -246,39 +279,38 @@ int knight_logic(int x, int y, int color){
             if (abs(j)==abs(i)){
                 continue;
             }
-            if ((x+i>=0 && x+i<=7)&&(y+j>=0 && y+j<=7)){
-                if (is_valid_attack(x + i, y + j, color)){
-                    legal_knight_moves_x[counter] = x+i;
-                    legal_knight_moves_y[counter] = y+j; //changed x to y, don't know if itll work
-                    counter++;
-                } else if (check_piece_color(x+i, y+j)==2){
-                    legal_knight_moves_x[counter] = x+i;
-                    legal_knight_moves_y[counter] = y+j; 
-                    counter++;
+            if(!piece_logic_for_moving){
+                if ((x+i>=0 && x+i<=7)&&(y+j>=0 && y+j<=7)){
+                    squares_under_attack(x+i, y+j);
                 }
+            }else if(!is_in_check(x, y, color)){
+                if ((x+i>=0 && x+i<=7)&&(y+j>=0 && y+j<=7)){
+                    if (is_valid_attack(x + i, y + j, color)){
+                        highlighted_squares(x+i, y+j, counter);
 
+                        counter++;
+                    } else if (check_piece_color(x+i, y+j)==2){
+                        highlighted_squares(x+i, y+j, counter);
+                        counter++;
+                    }
+
+                }
             }
         }
     }
     printf("\nknight counter: %d\n", counter);
-    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
-    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
-    highlighted_squares_x[0] = counter;
-    highlighted_squares_y[0] = counter;
+    
 
     printf("\nPossible Moves:\n");
-    for (int i=0; i<counter; i++){
-        printf("(%d, %d)",legal_knight_moves_x[i],legal_knight_moves_y[i]);
-        highlight_legal_moves(legal_knight_moves_x[i],legal_knight_moves_y[i]);
-        
-        highlighted_squares_x[i+1] = legal_knight_moves_x[i];
-        highlighted_squares_y[i+1] = legal_knight_moves_y[i];
+    for (int i=1; i<counter+1; i++){
+        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
     }
 }
 int rook_logic(int x, int y, int color){
     int counter = 0;
-    int legal_rook_moves_x[14];
-    int legal_rook_moves_y[14];
+    
+    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
+    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
     //left
     for (int i=-1; x+i>-1; i--){
         if(check_piece_color(x+i, y) == color){
@@ -290,9 +322,11 @@ int rook_logic(int x, int y, int color){
             counter+=1;
             break;
         }else if (check_piece_color(x+i, y) == 2){
-            legal_rook_moves_x[counter]=x+i;
-            legal_rook_moves_y[counter]=y;
-            counter+=1;
+            if (!is_in_check(x,y,color)){
+                legal_rook_moves_x[counter]=x+i;
+                legal_rook_moves_y[counter]=y;
+                counter+=1;
+            }
         }
     }
     //up
