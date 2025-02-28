@@ -52,8 +52,8 @@ extern int sim_counter;
 
 extern int highlighted_squares_x[32];
 extern int highlighted_squares_y[32];
-extern int squares_under_attack_x[200];
-extern int squares_under_attack_y[200];
+extern int squares_under_attack_x[400];
+extern int squares_under_attack_y[400];
 
 extern char board[8][8];
 extern char fake_board[8][8];

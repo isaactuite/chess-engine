@@ -35,8 +35,8 @@ int is_selected_piece = 0;
 int highlighted_squares_x[32] = {-1};
 int highlighted_squares_y[32] = {-1};
 
-int squares_under_attack_x[200] = {-1};
-int squares_under_attack_y[200] = {-1};
+int squares_under_attack_x[400] = {-1};
+int squares_under_attack_y[400] = {-1};
 
 int bking_x = 4;
 int bking_y = 0;

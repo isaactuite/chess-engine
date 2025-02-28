@@ -2,6 +2,7 @@
     "files.associations": {
         "sdl_image.h": "c",
         "string.h": "c",
-        "defs.h": "c"
+        "defs.h": "c",
+        "game_logic.h": "c"
     }
 }

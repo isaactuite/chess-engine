@@ -33,11 +33,8 @@ ChessPiece load_piece(const char* path) {
 
 int get_tile_x(float x){
     if (x>=board_start_x && x<=board_start_x+BOARD_SIZE){
-        printf("board_start_x: %d\n",board_start_x);
         float x_relative = x-board_start_x;
-        printf("relative_x", x_relative);
         return x_relative/SQUARE_SIZE;
-        
     }
 }
 int get_tile_y(float y){
@@ -90,6 +87,7 @@ void handle_mouse_event(SDL_Event *e) {
             if (check_piece_color(clicked_x, clicked_y) == turn_color) {
                 select_square(e->button.x, e->button.y); // Highlight legal moves
                 is_selected_piece = 1;
+                
             }
             return;
         }
