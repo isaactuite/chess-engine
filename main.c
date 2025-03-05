@@ -135,6 +135,7 @@ void handle_mouse_event(SDL_Event *e) {
                     }
 
                     if (board[clicked_x][clicked_y] == 'K' || board[clicked_x][clicked_y] == 'k'){
+                        
                         if (castling_rights_qs && clicked_x == 2 && clicked_y == 0){
                             board[3][0] = 'r';
                             board[0][0] = 'o';
@@ -150,9 +151,9 @@ void handle_mouse_event(SDL_Event *e) {
                             board[0][7] = 'o';
                             castling_rights_KS = 0;
                             castling_rights_QS = 0;
-                        }else if (castling_rights_QS && clicked_x == 6 && clicked_y == 7){
+                        }else if (castling_rights_KS && clicked_x == 6 && clicked_y == 7){
                             board[5][7] = 'R';
-                            board[0][7] = 'o';
+                            board[7][7] = 'o';
                             castling_rights_KS = 0;
                             castling_rights_QS = 0;
                         }
@@ -164,6 +165,13 @@ void handle_mouse_event(SDL_Event *e) {
                             castling_rights_KS = 0;
                         }
                         
+                    }
+                    if (board[clicked_x][clicked_y] == 'K'){
+                        wking_x = clicked_x;
+                        wking_y = clicked_y;
+                    } else if (board[clicked_x][clicked_y] == 'k'){
+                        bking_x = clicked_x;
+                        bking_y = clicked_y;
                     }
 
                     
