@@ -121,6 +121,51 @@ void handle_mouse_event(SDL_Event *e) {
                             }
                         }
                     }
+
+                    if (board[clicked_x][clicked_y] == 'R' || board[clicked_x][clicked_y] == 'r'){
+                        if (selected_x == 0 && selected_y == 0){
+                            castling_rights_qs = 0;
+                        }else if (selected_x == 7 && selected_y == 0){
+                            castling_rights_ks = 0;
+                        } else if (selected_x == 0 && selected_y == 7){
+                            castling_rights_QS = 0;
+                        } else if (selected_x == 7 && selected_y == 7){
+                            castling_rights_KS = 0;
+                        }
+                    }
+
+                    if (board[clicked_x][clicked_y] == 'K' || board[clicked_x][clicked_y] == 'k'){
+                        if (castling_rights_qs && clicked_x == 2 && clicked_y == 0){
+                            board[3][0] = 'r';
+                            board[0][0] = 'o';
+                            castling_rights_ks = 0;
+                            castling_rights_qs = 0;
+                        } else if (castling_rights_ks && clicked_x == 6 && clicked_y == 0){
+                            board[5][0] = 'r';
+                            board[7][0] = 'o';
+                            castling_rights_ks = 0;
+                            castling_rights_qs = 0;
+                        } else if (castling_rights_QS && clicked_x == 2 && clicked_y == 7){
+                            board[3][7] = 'R';
+                            board[0][7] = 'o';
+                            castling_rights_KS = 0;
+                            castling_rights_QS = 0;
+                        }else if (castling_rights_QS && clicked_x == 6 && clicked_y == 7){
+                            board[5][7] = 'R';
+                            board[0][7] = 'o';
+                            castling_rights_KS = 0;
+                            castling_rights_QS = 0;
+                        }
+                        if (selected_x == 4 && selected_y == 0){
+                            castling_rights_ks = 0;
+                            castling_rights_qs = 0;
+                        } else if (selected_x == 4 && selected_y == 7){
+                            castling_rights_QS = 0;
+                            castling_rights_KS = 0;
+                        }
+                        
+                    }
+
                     
 
                     // Clear highlight arrays
