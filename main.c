@@ -77,6 +77,9 @@ int check_en_passant(int selected_y, int clicked_y){
         return 0;
     }
 }
+void ending_graphic(){
+    return;
+}
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
         int clicked_x = get_tile_x(e->button.x);
@@ -121,6 +124,8 @@ void handle_mouse_event(SDL_Event *e) {
                             }
                         }
                     }
+                    en_passant_x = -1;
+                    en_passant_y = -1;
 
                     if (board[clicked_x][clicked_y] == 'R' || board[clicked_x][clicked_y] == 'r'){
                         if (selected_x == 0 && selected_y == 0){
@@ -169,10 +174,14 @@ void handle_mouse_event(SDL_Event *e) {
                     if (board[clicked_x][clicked_y] == 'K'){
                         wking_x = clicked_x;
                         wking_y = clicked_y;
+                        printf("\n (wking_x,wking_y) = (%d,%d)", wking_x, wking_y);
                     } else if (board[clicked_x][clicked_y] == 'k'){
                         bking_x = clicked_x;
                         bking_y = clicked_y;
+                        printf("\n (bking_x,bking_y) = (%d,%d)", bking_x, bking_y);
+                        
                     }
+                    update_fake_board();
 
                     
 
@@ -192,15 +201,22 @@ void handle_mouse_event(SDL_Event *e) {
                     selected_x = -1;
                     selected_y = -1;
                     is_selected_piece = 0;
+                    if (!is_checkmate()){
+                        ending_graphic();
+                        printf("\nCHECKMATE");
+                    } else{
+                        printf("\nNOT CHECKMATE");
+                    }
                     return;
                 }
             }
-
+            update_fake_board();
             // If click is not a legal move, deselect
             is_selected_piece = 0;
             draw_board();
             draw_pieces();
             update_display();
+            
         }
     }
 }

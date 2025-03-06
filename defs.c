@@ -27,8 +27,8 @@ int castling_rights_ks = 1;
 int turn_color =0; //0=white, 1=black
 int turn_count = 0; //pair values
 
-int en_passant_x = 0;
-int en_passant_y = 0;
+int en_passant_x = -1;
+int en_passant_y = -1;
 
 int is_selected_piece = 0;
 

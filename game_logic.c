@@ -16,9 +16,7 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
 int check_for_castle(int color, int counter);
 
 void highlight_legal_moves(int x, int y) {
-    if (!piece_logic_for_moving){
-        return;
-    }
+    
     int board_x = x * SQUARE_SIZE + board_start_x;
     int board_y = y * SQUARE_SIZE;
 
@@ -114,8 +112,9 @@ int is_valid_attack(int x, int y, int color){
 
 
 //individual piece logic
-int pawn_logic(int x, int y, int color){
-    
+int pawn_logic(int x, int y, int color, int checkmate){
+    printf("\n(%d) pawn at (%d,%d)", color, x, y);
+    update_fake_board();
     int counter = 1;
 
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
@@ -126,8 +125,9 @@ int pawn_logic(int x, int y, int color){
         if (y==1){
             //checks rank to see if black pawn has not moved yet
             for(int j = 1; j<3; j++){
-
+                
                 if (check_piece_color(x, y+j) != 2){
+                    update_fake_board();
                     //if there is something blocking the pawns file movement, break
                     break;
                 //don't have to check for check here, because it's not a capture
@@ -140,6 +140,7 @@ int pawn_logic(int x, int y, int color){
                     }
                     fake_board[x][y+j] = board[x][y+j];
                     fake_board[x][y] = board[x][y];
+                    update_fake_board();
                 }
             
             }
@@ -170,7 +171,7 @@ int pawn_logic(int x, int y, int color){
             fake_board[x-1][y+1] = board[x-1][y+1];
             fake_board[x][y] = board[x][y];
         }
-        if ((check_piece_color(x+1, y+1) == 0) && ((x+1>=0)&&(y+1<8))){
+        if ((check_piece_color(x+1, y+1) == 0) && ((x+1<8)&&(y+1<8))){
             fake_board[x+1][y+1] = fake_board[x][y];
             fake_board[x][y] = 'o';
             if (search_from_king(color) == 0){
@@ -216,6 +217,7 @@ int pawn_logic(int x, int y, int color){
             for(int j = -1; j>-3; j--){
 
                 if (check_piece_color(x, y+j) != 2){
+                    update_fake_board();
                     //if there is something blocking the pawns file movement, break
                     break;
                 //don't have to check for check here, because it's not a capture
@@ -246,7 +248,7 @@ int pawn_logic(int x, int y, int color){
         }
 
         //checks for pawn captures
-        if ((check_piece_color(x-1, y-1) == 0) && ((x-1>=0)&&(y-1<8))){
+        if ((check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1>0))){
             fake_board[x-1][y-1] = fake_board[x][y];
             fake_board[x][y] = 'o';
             if (search_from_king(color) == 0){
@@ -256,7 +258,7 @@ int pawn_logic(int x, int y, int color){
             fake_board[x-1][y-1] = board[x-1][y-1];
             fake_board[x][y] = board[x][y];
         }
-        if ((check_piece_color(x+1, y-1) == 0) && ((x+1>=0)&&(y-1<8))){
+        if ((check_piece_color(x+1, y-1) == 1) && ((x+1<8)&&(y-1>0))){
             fake_board[x+1][y-1] = fake_board[x][y];
             fake_board[x][y] = 'o';
             if (search_from_king(color) == 0){
@@ -293,18 +295,26 @@ int pawn_logic(int x, int y, int color){
         }
     }
 
-
-    for (int i=1; i<counter+1; i++){
-        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+    if (!checkmate){
+        for (int i=1; i<counter+1; i++){
+            highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+        }
+    }else{
+        if (highlighted_squares_x[0] == -1){
+            printf("\nhighlighted_squares_x[0]: (%d, %d)", highlighted_squares_x[0], highlighted_squares_y[0]);
+            return 1;
+        } else {
+            return 0;
+        }
     }
 
 }
 
-int knight_logic(int x, int y, int color){
-    
+int knight_logic(int x, int y, int color, int checkmate){
+    printf("\n(%d) knight at (%d,%d)", color, x, y);
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
-    
+    update_fake_board();
     int counter=1;
 
     for (int i = -2; i<3; i++){
@@ -322,12 +332,12 @@ int knight_logic(int x, int y, int color){
                 continue;
             }
             
-            else if ((x+i>=0 && x+i<=7)&&(y+j>=0 && y+j<=7)){
-                update_fake_board();
+            if ((x+i>=0 && x+i<=7)&&(y+j>=0 && y+j<=7)){
+                
                 if (color == check_piece_color(x+i, y+j)){
                     continue;
                 }
-                fake_board[x+i][y+j] = fake_board[x][y];
+                fake_board[x+i][y+j] = 'n';
                 fake_board[x][y] = 'o';
                 if (search_from_king(color) ==0){
                     if (is_valid_attack(x + i, y + j, color)){
@@ -338,8 +348,10 @@ int knight_logic(int x, int y, int color){
                         counter++;
                     }
                 }
-                
-                    
+                fake_board[x+i][y+j] = board[x+i][y+j];
+                fake_board[x][y] = board[x][y];
+                update_fake_board();
+
                 
             }
         }
@@ -347,16 +359,24 @@ int knight_logic(int x, int y, int color){
 
     
 
-    printf("Legal Moves:\n");
-    for (int i=1; i<counter+1; i++){
-        printf("(%d,%d)", highlighted_squares_x[i],highlighted_squares_y[i]);
-        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+    if (!checkmate){
+        for (int i=1; i<counter+1; i++){
+            highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
 
+        }
+    }else{
+        if (highlighted_squares_x[0] == -1){
+            printf("\nhighlighted_squares_x[0]: (%d, %d)", highlighted_squares_x[0], highlighted_squares_y[0]);
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }
-int rook_logic(int x, int y, int color){
+int rook_logic(int x, int y, int color, int checkmate){
+    printf("\n(%d) rook at (%d,%d)", color, x, y);
     int counter = 1;
-
+    update_fake_board();
     
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
@@ -377,6 +397,8 @@ int rook_logic(int x, int y, int color){
                 
                     highlighted_squares(x+i, y, counter);
                     counter+=1;
+                    fake_board[x+i][y] = board[x+i][y];
+                    fake_board[x][y] = board[x][y];
                     break;
                     
                 }else if (check_piece_color(x+i, y) == 2){
@@ -385,8 +407,6 @@ int rook_logic(int x, int y, int color){
                     counter+=1;
                 
                 }
-            } else{
-                continue;
             }
             fake_board[x+i][y] = board[x+i][y];
             fake_board[x][y] = board[x][y];
@@ -405,6 +425,8 @@ int rook_logic(int x, int y, int color){
                 
                     highlighted_squares(x, y+j, counter);
                     counter+=1;
+                    fake_board[x][y+j] = board[x][y+j];
+                    fake_board[x][y] = board[x][y];
                     break;
                     
                 }else if (check_piece_color(x, y+j) == 2){
@@ -413,8 +435,6 @@ int rook_logic(int x, int y, int color){
                     counter+=1;
                 
                 }
-            } else{
-                continue;
             }
             fake_board[x][y+j] = board[x][y+j];
             fake_board[x][y] = board[x][y];
@@ -433,6 +453,8 @@ int rook_logic(int x, int y, int color){
                 
                     highlighted_squares(x+i, y, counter);
                     counter+=1;
+                    fake_board[x+i][y] = board[x+i][y];
+                    fake_board[x][y] = board[x][y];
                     break;
                     
                 }else if (check_piece_color(x+i, y) == 2){
@@ -441,8 +463,6 @@ int rook_logic(int x, int y, int color){
                     counter+=1;
                 
                 }
-            } else{
-                continue;
             }
             fake_board[x+i][y] = board[x+i][y];
             fake_board[x][y] = board[x][y];
@@ -462,6 +482,8 @@ int rook_logic(int x, int y, int color){
                 
                     highlighted_squares(x, y+j, counter);
                     counter+=1;
+                    fake_board[x][y+j] = board[x][y+j];
+                    fake_board[x][y] = board[x][y];
                     break;
                     
                 }else if (check_piece_color(x, y+j) == 2){
@@ -470,22 +492,27 @@ int rook_logic(int x, int y, int color){
                     counter+=1;
                 
                 }
-            } else{
-                continue;
             }
             fake_board[x][y+j] = board[x][y+j];
             fake_board[x][y] = board[x][y];
         }
 
-    
-    for (int i=1; i<counter+1; i++){
-
-        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
-
+    if (!checkmate){
+        for (int i=1; i<counter+1; i++){
+            highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+        }
+    }else{
+        if (highlighted_squares_x[0] == -1){
+            printf("\nhighlighted_squares_x[0]: (%d, %d)", highlighted_squares_x[0], highlighted_squares_y[0]);
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }
-int bishop_logic(int x, int y, int color){
-    
+int bishop_logic(int x, int y, int color, int checkmate){
+    printf("\n(%d) bishop at (%d,%d)", color, x, y);
+    update_fake_board();
     
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
@@ -505,6 +532,8 @@ int bishop_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y+i, counter);
                 counter+=1;
+                fake_board[x+i][y+i] = board[x+i][y+i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y+i) == 2){
@@ -513,8 +542,6 @@ int bishop_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y+i] = board[x+i][y+i];
         fake_board[x][y] = board[x][y];
@@ -534,6 +561,8 @@ int bishop_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y-i, counter);
                 counter+=1;
+                fake_board[x+i][y-i] = board[x+i][y-i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y-i) == 2){
@@ -542,8 +571,6 @@ int bishop_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y-i] = board[x+i][y-i];
         fake_board[x][y] = board[x][y];
@@ -562,6 +589,8 @@ int bishop_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y+i, counter);
                 counter+=1;
+                fake_board[x+i][y+i] = board[x+i][y+i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y+i) == 2){
@@ -570,8 +599,6 @@ int bishop_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y+i] = board[x+i][y+i];
         fake_board[x][y] = board[x][y];
@@ -590,6 +617,8 @@ int bishop_logic(int x, int y, int color){
             
                 highlighted_squares(x-i, y+i, counter);
                 counter+=1;
+                fake_board[x-i][y+i]  = board[x-i][y+i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x-i, y+i) == 2){
@@ -598,21 +627,27 @@ int bishop_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x-i][y+i]  = board[x-i][y+i];
         fake_board[x][y] = board[x][y];
     }
-
-    for (int i=1; i<counter+1; i++){
-
-        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
-
+    if (!checkmate){
+        for (int i=1; i<counter+1; i++){
+            highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+        }
+    }else{
+        if (highlighted_squares_x[0] == -1){
+            printf("\nhighlighted_squares_x[0]: (%d, %d)", highlighted_squares_x[0], highlighted_squares_y[0]);
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }
-int queen_logic(int x, int y, int color){
-    
+int queen_logic(int x, int y, int color, int checkmate){
+    printf("\n(%d) queen at (%d,%d)", color, x, y);
+
+    update_fake_board();
     int counter = 1;
     
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
@@ -631,6 +666,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y+i, counter);
                 counter+=1;
+                fake_board[x+i][y+i] = board[x+i][y+i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y+i) == 2){
@@ -639,8 +676,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y+i] = board[x+i][y+i];
         fake_board[x][y] = board[x][y];
@@ -660,6 +695,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y-i, counter);
                 counter+=1;
+                fake_board[x+i][y-i] = board[x+i][y-i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y-i) == 2){
@@ -668,8 +705,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y-i] = board[x+i][y-i];
         fake_board[x][y] = board[x][y];
@@ -688,6 +723,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y+i, counter);
                 counter+=1;
+                fake_board[x+i][y+i] = board[x+i][y+i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y+i) == 2){
@@ -696,8 +733,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y+i] = board[x+i][y+i];
         fake_board[x][y] = board[x][y];
@@ -716,6 +751,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x-i, y+i, counter);
                 counter+=1;
+                fake_board[x-i][y+i]  = board[x-i][y+i];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x-i, y+i) == 2){
@@ -724,8 +761,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x-i][y+i]  = board[x-i][y+i];
         fake_board[x][y] = board[x][y];
@@ -745,6 +780,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y, counter);
                 counter+=1;
+                fake_board[x+i][y] = board[x+i][y];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y) == 2){
@@ -753,8 +790,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y] = board[x+i][y];
         fake_board[x][y] = board[x][y];
@@ -773,6 +808,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x, y+j, counter);
                 counter+=1;
+                fake_board[x][y+j] = board[x][y+j];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x, y+j) == 2){
@@ -781,8 +818,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x][y+j] = board[x][y+j];
         fake_board[x][y] = board[x][y];
@@ -801,6 +836,8 @@ int queen_logic(int x, int y, int color){
             
                 highlighted_squares(x+i, y, counter);
                 counter+=1;
+                fake_board[x+i][y] = board[x+i][y];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x+i, y) == 2){
@@ -809,8 +846,6 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x+i][y] = board[x+i][y];
         fake_board[x][y] = board[x][y];
@@ -826,10 +861,13 @@ int queen_logic(int x, int y, int color){
         fake_board[x][y] = 'o';
 
         if (search_from_king(color)==0){
+            printf("piece_logic_for_moving: %d", piece_logic_for_moving);
             if (is_valid_attack(x, y+j, color)){
             
                 highlighted_squares(x, y+j, counter);
                 counter+=1;
+                fake_board[x][y+j] = board[x][y+j];
+                fake_board[x][y] = board[x][y];
                 break;
                 
             }else if (check_piece_color(x, y+j) == 2){
@@ -838,20 +876,28 @@ int queen_logic(int x, int y, int color){
                 counter+=1;
             
             }
-        } else{
-            continue;
         }
         fake_board[x][y+j] = board[x][y+j];
         fake_board[x][y] = board[x][y];
     }
+    if (!checkmate){
+        for (int i=1; i<counter+1; i++){
+            highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+        }
 
-    for (int i=1; i<counter+1; i++){
-        
-        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+    }else{
+        if (highlighted_squares_x[0] == -1){
+            printf("\nhighlighted_squares_x[0]: (%d, %d)", highlighted_squares_x[0], highlighted_squares_y[0]);
+            return 1;
+        } else {
+            return 0;
+        }
     }
-
 }
-int king_logic(int x, int y, int color){
+int king_logic(int x, int y, int color, int checkmate){
+    printf("\n(%d) king at (%d,%d)", color, x, y);
+
+    update_fake_board();
     int temp_king_x;
     int temp_king_y;
     if (color == 0){
@@ -861,23 +907,23 @@ int king_logic(int x, int y, int color){
         temp_king_x = bking_x;
         temp_king_y = bking_y;
     }
-    if(piece_logic_for_moving){
-        memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
-        memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
-    }
+    
+    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
+    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
+    
     int counter = 1;
     
-    counter += check_for_castle(color, counter);
+    counter = check_for_castle(color, counter);
 
     for(int i = -1;i<2; i++){
-        if (x+i<8 ||x+i<0){
+        if (x+i>=8 ||x+i<0){
             continue;
         }
         for (int j =-1; j<2;j++){
-            if (y+j<8 ||y+j<0){
+            if (y+j>=8 ||y+j<0){
                 continue;
             }
-                    
+            
             if((j == i) &&(j == 0)){
                 continue;
             
@@ -888,11 +934,15 @@ int king_logic(int x, int y, int color){
             if (color == 0){
                 wking_x +=i;
                 wking_y+=j;
+                fake_board[wking_x][wking_y] = 'K';
+                fake_board[temp_king_x][temp_king_y] = 'o';
             } else if (color == 1){
                 bking_x +=i;
                 bking_y+=j;
+                fake_board[bking_x][bking_y] = 'k';
+                fake_board[temp_king_x][temp_king_y] = 'o';
             }
-            if (search_from_king(color) == 1){
+            if (search_from_king(color) == 0){
                 if (is_valid_attack(x + i, y + j, color)){
                     highlighted_squares(x+i, y+j, counter);
                     counter++;
@@ -902,29 +952,50 @@ int king_logic(int x, int y, int color){
                 }
             }
             if (color == 0){
+                fake_board[wking_x][wking_y] = board[wking_x][wking_y];
+                fake_board[temp_king_x][temp_king_y] = board[temp_king_x][temp_king_y];
                 wking_x = temp_king_x;
                 wking_y=temp_king_y;
+                
             } else if (color == 1){
+                fake_board[bking_x][bking_y] = board[bking_x][bking_y];
+                fake_board[temp_king_x][temp_king_y] = board[temp_king_x][temp_king_y];
                 bking_x =temp_king_x;
                 bking_y=temp_king_y;
             }
         }
     }
-    
-    for (int i=1; i<counter+1; i++){
-        highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+    if (!checkmate){
+        for (int i=1; i<counter+1; i++){
+            highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
+        }
+    }else{
+        if (highlighted_squares_x[0] == -1){
+            printf("\nhighlighted_squares_x[0]: (%d, %d)", highlighted_squares_x[0], highlighted_squares_y[0]);
+            return 1;
+        } else {
+            return 0;
+        }
     }
 }
 int search_from_king(int color){
+    printf("wking: (%d,%d)",wking_x,wking_y);
+    printf("bking: (%d,%d)",bking_x,bking_y);
     int decision;
     for (int i=0; i<8; i++){
         printf("\n");
         for (int j=0; j<8; j++){
-            printf("%c", fake_board[i][j]);
+            printf("%c", fake_board[j][i]);
         }
     } 
-    printf("\n\n");
-    
+    printf("\n");
+    for (int i=0; i<8; i++){
+        printf("\n");
+        for (int j=0; j<8; j++){
+            printf("%c", board[j][i]);
+        }
+    } 
+    printf("\n\n\n");
     if (color==0){
         //left up
         for (int i=-1; wking_x+i>-1 && wking_y+i>-1; i--){
@@ -1020,7 +1091,7 @@ int search_from_king(int color){
                 }
                 
                 if ((wking_x+i>=0 && wking_x+i<=7)&&(wking_y+j>=0 && wking_y+j<=7)){
-                    decision = king_search_help(wking_x+i, wking_y+j, color, 'n', 'g');
+                    decision = king_search_help(wking_x+i, wking_y+j, color, 'n', 'n');
                     if (decision == 0 || decision == 1){
                         continue;
                     } else if (decision == 3){
@@ -1038,11 +1109,11 @@ int search_from_king(int color){
         }
          //king
          for(int i = -1;i<2; i++){
-            if (wking_x+i<=8 ||wking_x+i<0){
+            if (wking_x+i>=8 ||wking_x+i<0){
                 continue;
             }
             for (int j =-1; j<2;j++){
-                if (wking_x+j<=8 ||wking_x+j<0){
+                if (wking_x+j>=8 ||wking_x+j<0){
                     continue;
                 }
                         
@@ -1054,7 +1125,7 @@ int search_from_king(int color){
                     continue;
                 }
                 if ((wking_x+i>=0 && wking_x+i<=7)&&(wking_y+j>=0 && wking_y+j<=7)){
-                    decision = king_search_help(wking_x+i, wking_y+j, color, 'k', 'G');
+                    decision = king_search_help(wking_x+i, wking_y+j, color, 'k', 'k');
                     if (decision == 0 || decision == 1){
                         continue;
                     } else if (decision == 3){
@@ -1163,7 +1234,7 @@ int search_from_king(int color){
                 }
                 
                 if ((bking_x+i>=0 && bking_x+i<=7)&&(bking_y+j>=0 && bking_y+j<=7)){
-                    decision = king_search_help(bking_x+i, bking_y+j, color, 'N', 'G');
+                    decision = king_search_help(bking_x+i, bking_y+j, color, 'N', 'N');
                     if (decision == 0 || decision == 1){
                         continue;
                     } else if (decision == 3){
@@ -1182,11 +1253,11 @@ int search_from_king(int color){
         }
         //king
         for(int i = -1;i<2; i++){
-            if (bking_x+i<=8 ||bking_x+i<0){
+            if (bking_x+i>=8 ||bking_x+i<0){
                 continue;
             }
             for (int j =-1; j<2;j++){
-                if (bking_x+j<=8 ||bking_x+j<0){
+                if (bking_x+j>=8 ||bking_x+j<0){
                     continue;
                 }
                         
@@ -1198,7 +1269,7 @@ int search_from_king(int color){
                     continue;
                 }
                 if ((bking_x+i>=0 && bking_x+i<=7)&&(bking_y+j>=0 && bking_y+j<=7)){
-                    decision = king_search_help(bking_x+i, bking_y+j, color, 'K', 'G');
+                    decision = king_search_help(bking_x+i, bking_y+j, color, 'K', 'K');
                     if (decision == 0 || decision == 1){
                         continue;
                     } else if (decision == 3){
@@ -1216,19 +1287,24 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
 
         if (check_piece_color(x, y) == 0){
             piece_logic_for_moving = 1;
+            update_fake_board();
             return 0;
         }
         if (check_piece_color(x, y) == 2){
             piece_logic_for_moving = 1;
+            update_fake_board();
             return 2;
         }
         if (check_piece_color(x, y) == 1){
             
             if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){
+                printf("\nIn check by %c or %c at (%d,%d)", piece_to_check1,piece_to_check2,x,y);
+                update_fake_board();
                 piece_logic_for_moving = 1;
                 return 3;
             }
             piece_logic_for_moving = 1;
+            update_fake_board();
             return 1;
         }
         
@@ -1237,32 +1313,36 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
     else if (color==1){
         if (check_piece_color(x, y) == 1){
             piece_logic_for_moving = 1;
+            update_fake_board();
             return 0;
         }
         if (check_piece_color(x, y) == 2){
             piece_logic_for_moving = 1;
+            update_fake_board();
             return 2;
         }
         if (check_piece_color(x, y) == 0){
             
             if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){
                 piece_logic_for_moving = 1;
+                printf("\nIn check by %c or %c at (%d,%d)", piece_to_check1,piece_to_check2,x,y);
+                update_fake_board();
                 return 3;
             }
             piece_logic_for_moving = 1;
+            update_fake_board();
             return 1;
         }
     }
     piece_logic_for_moving = 1;
+    update_fake_board();
     return -1;
 }
 int check_for_castle(int color, int counter){
     if (color == 0){
-
         int temp_wking_x = wking_x;
-
         if (castling_rights_QS){
-            if (board[3][7] == 'o' && board[2][7] == 'o' && board[1][7] == 'o' &&board[3][7] == 'R'){
+            if (board[3][7] == 'o' && board[2][7] == 'o' && board[1][7] == 'o' &&board[0][7] == 'R'){
                 if (!search_from_king(color)){
                     fake_board[3][7] = 'K';
                     fake_board[4][7] = 'o';
@@ -1310,7 +1390,7 @@ int check_for_castle(int color, int counter){
         int temp_bking_x = bking_x;
 
         if (castling_rights_qs){
-            if (board[3][0] == 'o' && board[2][0] == 'o' && board[1][0] == 'o' &&board[3][0] == 'R'){
+            if (board[3][0] == 'o' && board[2][0] == 'o' && board[1][0] == 'o' &&board[0][0] == 'r'){
                 if (!search_from_king(color)){
                     fake_board[3][0] = 'K';
                     fake_board[4][0] = 'o';
@@ -1370,31 +1450,125 @@ int legal_moves(int x, int y){
     switch (board[x][y]){
         case 'P': case 'p':
             printf("\nPawn Selected");
-            pawn_logic(x, y, color);
+            pawn_logic(x, y, color, 0);
             break;
         case 'N': case 'n':
             printf("\nKnight selected");
-            knight_logic(x, y, color);
+            knight_logic(x, y, color, 0);
             break;
         case 'B': case 'b':
             printf("\nBishop selected");
-            bishop_logic(x, y, color);
+            bishop_logic(x, y, color, 0);
             break;
         case 'R': case 'r':
             printf("\nRook selected");
-            rook_logic(x, y,color);
+            rook_logic(x, y,color, 0);
             break;
         
         case 'Q': case 'q':
             printf("\nQueen selected");
-            queen_logic(x, y, color);
+            queen_logic(x, y, color, 0);
             break;
         case 'K': case 'k':
             printf("\nKing selected");
-            king_logic(x, y, color);
+            king_logic(x, y, color, 0);
             break;
         default:
             printf("\nlegal_moves called, invalid");
             break;
     }
+}
+
+int is_checkmate(){
+    
+    int checkmate = 1;
+    for (int i=0; i<8; i++){
+        for (int j=0; j<8; j++){
+            if (turn_color == 1){
+                switch (fake_board[i][j]){
+                    case 'k':
+                        if (!king_logic(i, j, turn_color, 1)){
+                            printf("\nblack king simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'p':
+                        if (!pawn_logic(i, j, turn_color, 1)){
+                            printf("\nblack pawn simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'n':
+                        if (!knight_logic(i, j, turn_color, 1)){
+                            printf("\nblack knight simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'b':
+                        if (!bishop_logic(i, j, turn_color, 1)){
+                            printf("\nblack bishop simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'r':
+                        if (!rook_logic(i, j,turn_color, 1)){
+                            printf("\nblack rook simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'q':
+                        if (!queen_logic(i, j, turn_color, 1)){
+                            printf("\nblack queen simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            } else if (turn_color == 0){
+                switch (fake_board[i][j]){
+                    case 'K':
+                        if (!king_logic(i, j, turn_color, 1)){
+                            printf("\nwhite king simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'P':
+                        if (!pawn_logic(i, j, turn_color, 1)){
+                            printf("\nwhite pawn simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'N':
+                        if (!knight_logic(i, j, turn_color, 1)){
+                            printf("\nwhite knight simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'B':
+                        if (!bishop_logic(i, j, turn_color, 1)){
+                            printf("\nwhite bishop simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'R':
+                        if (!rook_logic(i, j,turn_color, 1)){
+                            printf("\nwhite rook simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    case 'Q':
+                        if (!queen_logic(i, j, turn_color, 1)){
+                            printf("\nwhite queen simmed at (%d,%d)", i,j);
+                            return 1;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+    printf("\nReturning 0");
+    return 0;
 }
