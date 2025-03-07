@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_main.h"
-#include "include\SDL3_image\SDL_image.h"
+#include "SDL3_image/SDL_image.h"
 #include "defs.h"
 #include "game_logic.h"
 
@@ -30,7 +30,6 @@ ChessPiece load_piece(const char* path) {
     SDL_DestroySurface(surface);
     return piece;
 }
-
 int get_tile_x(float x){
     if (x>=board_start_x && x<=board_start_x+BOARD_SIZE){
         float x_relative = x-board_start_x;
@@ -40,6 +39,48 @@ int get_tile_x(float x){
 int get_tile_y(float y){
         return y/SQUARE_SIZE;
 }
+
+void flip_board(){
+
+    if (flipped){
+        for (int i = 0;i<8;i++){
+            for (int j=0; j<8; j++){
+                dynamic_board[i][j] = board[i][j];
+
+            }
+        }
+        flipped = 0;
+    } else{
+        for (int i = 0;i<8;i++){
+            for (int j=0; j<8; j++){
+                dynamic_board[7-i][7-j] = board[i][j];
+            }
+        }
+        flipped = 1;
+    }
+    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
+    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
+
+    update_display();
+
+}
+
+void update_dynamic_board(){
+    if (!flipped){
+        for (int i = 0;i<8;i++){
+            for (int j=0; j<8; j++){
+                dynamic_board[i][j] = board[i][j];
+            }
+        }
+    } else{
+        for (int i = 0;i<8;i++){
+            for (int j=0; j<8; j++){
+                dynamic_board[7-i][7-j] = board[i][j];
+            }
+        }
+    }
+}
+
 
 void select_square(float x, float y) {
     // Ensure the click is within the bounds of the board
@@ -57,12 +98,14 @@ void select_square(float x, float y) {
         // Highlight the selected square in the framebuffer
         for (int dy = board_y; dy < board_y + SQUARE_SIZE && dy < WINDOW_HEIGHT; dy++) {
             for (int dx = board_x; dx < board_x + SQUARE_SIZE && dx < WINDOW_WIDTH; dx++) {
-                gFrameBuffer[dy * WINDOW_WIDTH + dx] = 0x80FF80FF; // Highlight color (light green)
+                gFrameBuffer[dy * WINDOW_WIDTH + dx] = 0x8000A0A0;
             }
         }
-
+        selected_x = real(selected_x);
+        selected_y = real(selected_y);
         // Compute and highlight legal moves
         legal_moves(selected_x, selected_y);
+        
 
         // Update display
         update_display();
@@ -80,11 +123,12 @@ int check_en_passant(int selected_y, int clicked_y){
 void ending_graphic(){
     return;
 }
+
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        int clicked_x = get_tile_x(e->button.x);
-        int clicked_y = get_tile_y(e->button.y);
-
+        int clicked_x = real(get_tile_x(e->button.x));
+        int clicked_y = real(get_tile_y(e->button.y));
+        
         // Check if a piece of the correct color is selected
         if (is_selected_piece == 0) {
             if (check_piece_color(clicked_x, clicked_y) == turn_color) {
@@ -108,7 +152,7 @@ void handle_mouse_event(SDL_Event *e) {
                             en_passant_x=clicked_x;
                             en_passant_y=clicked_y;
                         }
-                        if (en_passant_x){
+                        else if (en_passant_x){
                             if (check_piece_color(clicked_x, clicked_y)==0){
                                 //white
                                 if (clicked_x == en_passant_x && clicked_y==en_passant_y-1){
@@ -119,13 +163,24 @@ void handle_mouse_event(SDL_Event *e) {
                                 //white
                                 if (clicked_x == en_passant_x && clicked_y==en_passant_y+1){
                                     board[clicked_x][en_passant_y] = 'o';
-
                                 }
                             }
+                            en_passant_x = 0;
+                            en_passant_y = 0;
                         }
+                        if (clicked_y == 0){
+                            board[clicked_x][clicked_y] = 'Q';
+                        }
+                        if (clicked_y == 7){
+                            board[clicked_x][clicked_y] = 'q';
+                        }
+
+                    } else{
+                        en_passant_x = 0;
+                        en_passant_y = 0;
                     }
-                    en_passant_x = -1;
-                    en_passant_y = -1;
+
+                    
 
                     if (board[clicked_x][clicked_y] == 'R' || board[clicked_x][clicked_y] == 'r'){
                         if (selected_x == 0 && selected_y == 0){
@@ -181,6 +236,7 @@ void handle_mouse_event(SDL_Event *e) {
                         printf("\n (bking_x,bking_y) = (%d,%d)", bking_x, bking_y);
                         
                     }
+                    update_dynamic_board();
                     update_fake_board();
 
                     
@@ -209,6 +265,15 @@ void handle_mouse_event(SDL_Event *e) {
                     }
                     return;
                 }
+                if (check_piece_color(clicked_x, clicked_y) == turn_color) {
+                    draw_board();
+                    select_square(e->button.x, e->button.y); // Highlight legal moves
+                    is_selected_piece = 1;
+                    
+                    return;
+                }
+                
+                
             }
             update_fake_board();
             // If click is not a legal move, deselect
@@ -342,7 +407,7 @@ void draw_pieces() {
 
     for (int i=0;i<8; i++){
         for (int j=0;j<8;j++){
-            draw_piece(board[i][j], i, j);
+            draw_piece(dynamic_board[i][j], i, j);
         }
     }
 }
@@ -380,6 +445,9 @@ int update(void) {
         }
         if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
             handle_mouse_event(&e);
+        }
+        if (e.type == SDL_EVENT_KEY_DOWN){
+            flip_board();
         }
     }
 

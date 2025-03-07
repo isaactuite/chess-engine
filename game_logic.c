@@ -4,6 +4,13 @@
 #include "game_logic.h"
 #include <math.h>
 
+int real(int coord){
+    if (flipped == 0){
+        return coord;
+    } else {
+        return 7-coord;
+    }
+}
 void update_fake_board(){
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
@@ -15,20 +22,42 @@ int search_from_king(int color);
 int king_search_help(int x, int y, int color, char piece_to_check1, char piece_to_check2);
 int check_for_castle(int color, int counter);
 
+
 void highlight_legal_moves(int x, int y) {
-    
+    x = real(x);
+    y = real(y);
     int board_x = x * SQUARE_SIZE + board_start_x;
     int board_y = y * SQUARE_SIZE;
-
-
+    
+    // Check if coordinates are within bounds
     if (board_x < 0 || board_y < 0 || board_x >= WINDOW_WIDTH || board_y >= WINDOW_HEIGHT) {
         return;
     }
-
-    for (int dy = board_y; dy < board_y + SQUARE_SIZE && dy < WINDOW_HEIGHT; dy++) {
-        for (int dx = board_x; dx < board_x + SQUARE_SIZE && dx < WINDOW_WIDTH; dx++) {
-
-            gFrameBuffer[dy * WINDOW_WIDTH + dx] = 0xFFFF80FF;
+    
+    // Calculate center of the square
+    int center_x = board_x + SQUARE_SIZE / 2;
+    int center_y = board_y + SQUARE_SIZE / 2;
+    
+    // Define circle properties
+    int radius = SQUARE_SIZE / 6;  // Small circle (adjust size as needed)
+    int gray_color = 0x50404040;   // Gray opaque color (RGBA)
+    
+    // Draw the circle using a simple distance-based algorithm
+    for (int dy = -radius; dy <= radius; dy++) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            // Check if point is inside the circle using distance formula
+            if (dx*dx + dy*dy <= radius*radius) {
+                // Calculate actual pixel position
+                int pixel_x = center_x + dx;
+                int pixel_y = center_y + dy;
+                
+                // Make sure we don't draw outside the window
+                if (pixel_x >= 0 && pixel_x < WINDOW_WIDTH && 
+                    pixel_y >= 0 && pixel_y < WINDOW_HEIGHT) {
+                    // Set the pixel color
+                    gFrameBuffer[pixel_y * WINDOW_WIDTH + pixel_x] = gray_color;
+                }
+            }
         }
     }
 }
@@ -114,7 +143,7 @@ int is_valid_attack(int x, int y, int color){
 //individual piece logic
 int pawn_logic(int x, int y, int color, int checkmate){
     printf("\n(%d) pawn at (%d,%d)", color, x, y);
-    update_fake_board();
+    
     int counter = 1;
 
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
@@ -127,7 +156,7 @@ int pawn_logic(int x, int y, int color, int checkmate){
             for(int j = 1; j<3; j++){
                 
                 if (check_piece_color(x, y+j) != 2){
-                    update_fake_board();
+                    
                     //if there is something blocking the pawns file movement, break
                     break;
                 //don't have to check for check here, because it's not a capture
@@ -140,7 +169,7 @@ int pawn_logic(int x, int y, int color, int checkmate){
                     }
                     fake_board[x][y+j] = board[x][y+j];
                     fake_board[x][y] = board[x][y];
-                    update_fake_board();
+                    
                 }
             
             }
@@ -217,7 +246,7 @@ int pawn_logic(int x, int y, int color, int checkmate){
             for(int j = -1; j>-3; j--){
 
                 if (check_piece_color(x, y+j) != 2){
-                    update_fake_board();
+                    
                     //if there is something blocking the pawns file movement, break
                     break;
                 //don't have to check for check here, because it's not a capture
@@ -248,7 +277,7 @@ int pawn_logic(int x, int y, int color, int checkmate){
         }
 
         //checks for pawn captures
-        if ((check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1>0))){
+        if ((check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1>=0))){
             fake_board[x-1][y-1] = fake_board[x][y];
             fake_board[x][y] = 'o';
             if (search_from_king(color) == 0){
@@ -258,7 +287,7 @@ int pawn_logic(int x, int y, int color, int checkmate){
             fake_board[x-1][y-1] = board[x-1][y-1];
             fake_board[x][y] = board[x][y];
         }
-        if ((check_piece_color(x+1, y-1) == 1) && ((x+1<8)&&(y-1>0))){
+        if ((check_piece_color(x+1, y-1) == 1) && ((x+1<8)&&(y-1>=0))){
             fake_board[x+1][y-1] = fake_board[x][y];
             fake_board[x][y] = 'o';
             if (search_from_king(color) == 0){
@@ -296,7 +325,7 @@ int pawn_logic(int x, int y, int color, int checkmate){
     }
 
     if (!checkmate){
-        for (int i=1; i<counter+1; i++){
+        for (int i=1; i<counter+2; i++){
             highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
         }
     }else{
@@ -314,7 +343,7 @@ int knight_logic(int x, int y, int color, int checkmate){
     printf("\n(%d) knight at (%d,%d)", color, x, y);
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
-    update_fake_board();
+   
     int counter=1;
 
     for (int i = -2; i<3; i++){
@@ -337,7 +366,7 @@ int knight_logic(int x, int y, int color, int checkmate){
                 if (color == check_piece_color(x+i, y+j)){
                     continue;
                 }
-                fake_board[x+i][y+j] = 'n';
+                fake_board[x+i][y+j] = fake_board[x][y];
                 fake_board[x][y] = 'o';
                 if (search_from_king(color) ==0){
                     if (is_valid_attack(x + i, y + j, color)){
@@ -350,7 +379,7 @@ int knight_logic(int x, int y, int color, int checkmate){
                 }
                 fake_board[x+i][y+j] = board[x+i][y+j];
                 fake_board[x][y] = board[x][y];
-                update_fake_board();
+                
 
                 
             }
@@ -376,7 +405,7 @@ int knight_logic(int x, int y, int color, int checkmate){
 int rook_logic(int x, int y, int color, int checkmate){
     printf("\n(%d) rook at (%d,%d)", color, x, y);
     int counter = 1;
-    update_fake_board();
+    
     
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
@@ -512,7 +541,7 @@ int rook_logic(int x, int y, int color, int checkmate){
 }
 int bishop_logic(int x, int y, int color, int checkmate){
     printf("\n(%d) bishop at (%d,%d)", color, x, y);
-    update_fake_board();
+   
     
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
@@ -647,7 +676,7 @@ int bishop_logic(int x, int y, int color, int checkmate){
 int queen_logic(int x, int y, int color, int checkmate){
     printf("\n(%d) queen at (%d,%d)", color, x, y);
 
-    update_fake_board();
+   
     int counter = 1;
     
     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
@@ -880,6 +909,7 @@ int queen_logic(int x, int y, int color, int checkmate){
         fake_board[x][y+j] = board[x][y+j];
         fake_board[x][y] = board[x][y];
     }
+    printf("\nCheckmate: %d", checkmate);
     if (!checkmate){
         for (int i=1; i<counter+1; i++){
             highlight_legal_moves(highlighted_squares_x[i],highlighted_squares_y[i]);
@@ -897,7 +927,7 @@ int queen_logic(int x, int y, int color, int checkmate){
 int king_logic(int x, int y, int color, int checkmate){
     printf("\n(%d) king at (%d,%d)", color, x, y);
 
-    update_fake_board();
+ 
     int temp_king_x;
     int temp_king_y;
     if (color == 0){
@@ -1283,28 +1313,29 @@ int search_from_king(int color){
 }
 int king_search_help(int x, int y, int color, char piece_to_check1, char piece_to_check2){
     piece_logic_for_moving = 0;
+    
     if (color==0){
 
         if (check_piece_color(x, y) == 0){
             piece_logic_for_moving = 1;
-            update_fake_board();
+            
             return 0;
         }
         if (check_piece_color(x, y) == 2){
             piece_logic_for_moving = 1;
-            update_fake_board();
+            
             return 2;
         }
         if (check_piece_color(x, y) == 1){
             
             if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){
                 printf("\nIn check by %c or %c at (%d,%d)", piece_to_check1,piece_to_check2,x,y);
-                update_fake_board();
+                
                 piece_logic_for_moving = 1;
                 return 3;
             }
             piece_logic_for_moving = 1;
-            update_fake_board();
+            
             return 1;
         }
         
@@ -1313,12 +1344,12 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
     else if (color==1){
         if (check_piece_color(x, y) == 1){
             piece_logic_for_moving = 1;
-            update_fake_board();
+            
             return 0;
         }
         if (check_piece_color(x, y) == 2){
             piece_logic_for_moving = 1;
-            update_fake_board();
+           
             return 2;
         }
         if (check_piece_color(x, y) == 0){
@@ -1326,16 +1357,16 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
             if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){
                 piece_logic_for_moving = 1;
                 printf("\nIn check by %c or %c at (%d,%d)", piece_to_check1,piece_to_check2,x,y);
-                update_fake_board();
+                
                 return 3;
             }
             piece_logic_for_moving = 1;
-            update_fake_board();
+           
             return 1;
         }
     }
     piece_logic_for_moving = 1;
-    update_fake_board();
+
     return -1;
 }
 int check_for_castle(int color, int counter){

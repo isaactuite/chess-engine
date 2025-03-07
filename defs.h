@@ -40,6 +40,7 @@ extern int turn_count; //pair values
 extern int en_passant_x;
 extern int en_passant_y;
 
+extern int flipped;
 extern int is_selected_piece;
 extern int bking_x;
 extern int bking_y;
@@ -57,5 +58,7 @@ extern int squares_under_attack_y[400];
 
 extern char board[8][8];
 extern char fake_board[8][8];
+extern char dynamic_board[8][8];
+
 
 #endif // DEFS_H

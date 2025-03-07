@@ -5,6 +5,8 @@
 #include <stdio.h>
 
 // Function prototypes
+int real(int coords);
+uint32_t blend_colors(uint32_t background, uint32_t foreground, uint8_t alpha);
 void highlight_legal_moves(int x, int y);
 int check_piece_color(int x, int y);
 int is_valid_attack(int x, int y, int color);

@@ -44,6 +44,7 @@ int bking_y = 0;
 int wking_x = 4;
 int wking_y = 7;
 
+int flipped = 0;
 int piece_logic_for_moving = 1;
 int sim_counter = 1;
 
@@ -59,6 +60,16 @@ char board[8][8] = {
 };
 
 char fake_board[8][8] = {
+    {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'},  // File A
+    {'n', 'p', 'o', 'o', 'o', 'o', 'P', 'N'},  // File B
+    {'b', 'p', 'o', 'o', 'o', 'o', 'P', 'B'},  // File C
+    {'q', 'p', 'o', 'o', 'o', 'o', 'P', 'Q'},  // File D
+    {'k', 'p', 'o', 'o', 'o', 'o', 'P', 'K'},  // File E
+    {'b', 'p', 'o', 'o', 'o', 'o', 'P', 'B'},  // File F
+    {'n', 'p', 'o', 'o', 'o', 'o', 'P', 'N'},  // File G
+    {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'}   // File H
+};
+char dynamic_board[8][8] = {
     {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'},  // File A
     {'n', 'p', 'o', 'o', 'o', 'o', 'P', 'N'},  // File B
     {'b', 'p', 'o', 'o', 'o', 'o', 'P', 'B'},  // File C
