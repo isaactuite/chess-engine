@@ -34,28 +34,60 @@ void highlight_legal_moves(int x, int y) {
         return;
     }
     
-    // Calculate center of the square
-    int center_x = board_x + SQUARE_SIZE / 2;
-    int center_y = board_y + SQUARE_SIZE / 2;
-    
-    // Define circle properties
-    int radius = SQUARE_SIZE / 6;  // Small circle (adjust size as needed)
-    int gray_color = 0x50404040;   // Gray opaque color (RGBA)
-    
-    // Draw the circle using a simple distance-based algorithm
-    for (int dy = -radius; dy <= radius; dy++) {
-        for (int dx = -radius; dx <= radius; dx++) {
-            // Check if point is inside the circle using distance formula
-            if (dx*dx + dy*dy <= radius*radius) {
-                // Calculate actual pixel position
-                int pixel_x = center_x + dx;
-                int pixel_y = center_y + dy;
+    // Check if this is a valid attack target
+    if (is_valid_attack(x, y, check_piece_color(selected_x, selected_y))) {
+        // Draw a circle outline around the piece for attack targets
+        int center_x = board_x + SQUARE_SIZE / 2;
+        int center_y = board_y + SQUARE_SIZE / 2;
+        int radius = SQUARE_SIZE / 2 - SQUARE_SIZE/15;  // Slightly smaller than half the square
+        int thickness = SQUARE_SIZE/18;  // Thickness of the circle outline
+        int attack_color =  0xFF4F7B9A;
+        
+        // Draw circle outline
+        for (int dy = -radius-thickness; dy <= radius+thickness; dy++) {
+            for (int dx = -radius-thickness; dx <= radius+thickness; dx++) {
+                // Calculate distance from center
+                int distance_squared = dx*dx + dy*dy;
                 
-                // Make sure we don't draw outside the window
-                if (pixel_x >= 0 && pixel_x < WINDOW_WIDTH && 
-                    pixel_y >= 0 && pixel_y < WINDOW_HEIGHT) {
-                    // Set the pixel color
-                    gFrameBuffer[pixel_y * WINDOW_WIDTH + pixel_x] = gray_color;
+                // Check if point is within the circle outline (between inner and outer radius)
+                if (distance_squared <= (radius+thickness)*(radius+thickness) && 
+                    distance_squared >= (radius-thickness)*(radius-thickness)) {
+                    
+                    // Calculate actual pixel position
+                    int pixel_x = center_x + dx;
+                    int pixel_y = center_y + dy;
+                    
+                    // Make sure we don't draw outside the window
+                    if (pixel_x >= 0 && pixel_x < WINDOW_WIDTH && 
+                        pixel_y >= 0 && pixel_y < WINDOW_HEIGHT) {
+                        // Set the pixel color
+                        gFrameBuffer[pixel_y * WINDOW_WIDTH + pixel_x] = attack_color;
+                    }
+                }
+            }
+        }
+    } else {
+        // Draw a solid circle for regular moves
+        int center_x = board_x + SQUARE_SIZE / 2;
+        int center_y = board_y + SQUARE_SIZE / 2;
+        int radius = SQUARE_SIZE / 6;  // Small circle for regular moves
+        int move_color = 0xFF4F7B9A;   // Semi-transparent gray for regular moves
+        
+        // Draw solid circle
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                // Check if point is inside the circle
+                if (dx*dx + dy*dy <= radius*radius) {
+                    // Calculate actual pixel position
+                    int pixel_x = center_x + dx;
+                    int pixel_y = center_y + dy;
+                    
+                    // Make sure we don't draw outside the window
+                    if (pixel_x >= 0 && pixel_x < WINDOW_WIDTH && 
+                        pixel_y >= 0 && pixel_y < WINDOW_HEIGHT) {
+                        // Set the pixel color
+                        gFrameBuffer[pixel_y * WINDOW_WIDTH + pixel_x] = move_color;
+                    }
                 }
             }
         }

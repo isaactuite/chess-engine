@@ -8,8 +8,8 @@ SDL_Renderer* gSDLRenderer;
 SDL_Texture* gSDLTexture;
 int gDone;
 
-int WINDOW_WIDTH = 1920 / 2;
-int WINDOW_HEIGHT = 1080 / 2;
+int WINDOW_WIDTH = 2560;
+int WINDOW_HEIGHT = 1440;
 
 int SQUARE_SIZE;
 int BOARD_SIZE;
