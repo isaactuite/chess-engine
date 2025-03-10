@@ -8,8 +8,8 @@ SDL_Renderer* gSDLRenderer;
 SDL_Texture* gSDLTexture;
 int gDone;
 
-int WINDOW_WIDTH = 2560;
-int WINDOW_HEIGHT = 1440;
+int WINDOW_WIDTH = 2560/2;
+int WINDOW_HEIGHT = 1440/2;
 
 int SQUARE_SIZE;
 int BOARD_SIZE;
@@ -70,6 +70,16 @@ char fake_board[8][8] = {
     {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'}   // File H
 };
 char dynamic_board[8][8] = {
+    {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'},  // File A
+    {'n', 'p', 'o', 'o', 'o', 'o', 'P', 'N'},  // File B
+    {'b', 'p', 'o', 'o', 'o', 'o', 'P', 'B'},  // File C
+    {'q', 'p', 'o', 'o', 'o', 'o', 'P', 'Q'},  // File D
+    {'k', 'p', 'o', 'o', 'o', 'o', 'P', 'K'},  // File E
+    {'b', 'p', 'o', 'o', 'o', 'o', 'P', 'B'},  // File F
+    {'n', 'p', 'o', 'o', 'o', 'o', 'P', 'N'},  // File G
+    {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'}   // File H
+};
+char bot_board[8][8] = {
     {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'},  // File A
     {'n', 'p', 'o', 'o', 'o', 'o', 'P', 'N'},  // File B
     {'b', 'p', 'o', 'o', 'o', 'o', 'P', 'B'},  // File C

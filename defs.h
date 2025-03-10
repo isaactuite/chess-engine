@@ -59,6 +59,6 @@ extern int squares_under_attack_y[400];
 extern char board[8][8];
 extern char fake_board[8][8];
 extern char dynamic_board[8][8];
-
+extern char bot_board[8][8];
 
 #endif // DEFS_H

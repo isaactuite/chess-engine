@@ -126,6 +126,7 @@ void ending_graphic(){
 
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        
         int clicked_x = real(get_tile_x(e->button.x));
         int clicked_y = real(get_tile_y(e->button.y));
         
