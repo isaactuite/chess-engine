@@ -132,7 +132,7 @@ void handle_mouse_event(SDL_Event *e) {
         
         // Check if a piece of the correct color is selected
         if (is_selected_piece == 0) {
-            if (check_piece_color(clicked_x, clicked_y) == turn_color) {
+            if (check_piece_color(clicked_x, clicked_y, 0) == turn_color) {
                 select_square(e->button.x, e->button.y); // Highlight legal moves
                 is_selected_piece = 1;
                 
@@ -154,13 +154,13 @@ void handle_mouse_event(SDL_Event *e) {
                             en_passant_y=clicked_y;
                         }
                         else if (en_passant_x){
-                            if (check_piece_color(clicked_x, clicked_y)==0){
+                            if (check_piece_color(clicked_x, clicked_y, 0)==0){
                                 //white
                                 if (clicked_x == en_passant_x && clicked_y==en_passant_y-1){
                                     board[clicked_x][en_passant_y] = 'o';
                                 }
                             }
-                            if (check_piece_color(clicked_x, clicked_y)==1){
+                            if (check_piece_color(clicked_x, clicked_y, 0)==1){
                                 //white
                                 if (clicked_x == en_passant_x && clicked_y==en_passant_y+1){
                                     board[clicked_x][en_passant_y] = 'o';
@@ -266,7 +266,7 @@ void handle_mouse_event(SDL_Event *e) {
                     }
                     return;
                 }
-                if (check_piece_color(clicked_x, clicked_y) == turn_color) {
+                if (check_piece_color(clicked_x, clicked_y, 0) == turn_color) {
                     draw_board();
                     select_square(e->button.x, e->button.y); // Highlight legal moves
                     is_selected_piece = 1;

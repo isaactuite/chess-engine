@@ -13,7 +13,13 @@ typedef struct {
     int width;
     int height;
 } ChessPiece;
+typedef struct {
+    int from_x, from_y;   // Current position
+    int to_x, to_y;       // Target position
+    int count;
+} Move;
 
+extern Move move_list[256];
 extern int* gFrameBuffer;
 extern SDL_Window* gSDLWindow;
 extern SDL_Renderer* gSDLRenderer;
@@ -60,5 +66,11 @@ extern char board[8][8];
 extern char fake_board[8][8];
 extern char dynamic_board[8][8];
 extern char bot_board[8][8];
-
+extern int pawn_pts[8][8];
+extern int knight_pts[8][8];
+extern int bishop_pts[8][8];
+extern int rook_pts[8][8];
+extern int queen_pts[8][8];
+extern int king_pts_mid[8][8];
+extern int king_pts_late[8][8];
 #endif // DEFS_H
