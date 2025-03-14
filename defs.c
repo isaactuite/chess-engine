@@ -23,12 +23,19 @@ int castling_rights_QS = 1;
 int castling_rights_KS = 1;
 int castling_rights_qs = 1;
 int castling_rights_ks = 1;
+int sim_castling_rights_QS = 1;
+int sim_castling_rights_KS = 1;
+int sim_castling_rights_qs = 1;
+int sim_castling_rights_ks = 1;
 
 int turn_color =0; //0=white, 1=black
+int bot_color = 1;
 int turn_count = 0; //pair values
 
 int en_passant_x = -1;
 int en_passant_y = -1;
+int bot_en_passant_x = -1;
+int bot_en_passant_y = -1;
 
 int is_selected_piece = 0;
 
@@ -44,6 +51,12 @@ int bking_y = 0;
 int wking_x = 4;
 int wking_y = 7;
 
+int bot_bking_x = 4;
+int bot_bking_y = 0;
+
+int bot_wking_x = 4;
+int bot_wking_y = 7;
+
 int flipped = 0;
 int piece_logic_for_moving = 1;
 int sim_counter = 1;
@@ -52,6 +65,7 @@ int sim_counter = 1;
 
 
 Move move_list[MAX_MOVES];
+MoveStack history;
 
 char board[8][8] = {
     {'r', 'p', 'o', 'o', 'o', 'o', 'P', 'R'},  // File A

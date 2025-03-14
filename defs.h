@@ -17,8 +17,19 @@ typedef struct {
     int from_x, from_y;   // Current position
     int to_x, to_y;       // Target position
     int count;
+    int special;
+    char moved_piece;
+    char captured_piece;
+    int castling[4];
+    int en_pass_x;
+    int en_pass_y;
 } Move;
 
+typedef struct {
+    Move moves[1024];
+    int top;
+} MoveStack;
+extern MoveStack history;
 extern Move move_list[256];
 extern int* gFrameBuffer;
 extern SDL_Window* gSDLWindow;
@@ -40,11 +51,20 @@ extern int castling_rights_QS;
 extern int castling_rights_KS;
 extern int castling_rights_qs;
 extern int castling_rights_ks;
+extern int sim_castling_rights_QS;
+extern int sim_castling_rights_KS;
+extern int sim_castling_rights_qs;
+extern int sim_castling_rights_ks;
+
 extern int turn_color; //1=white, 0=black
+extern int bot_color;
 extern int turn_count; //pair values
 
 extern int en_passant_x;
 extern int en_passant_y;
+
+extern int bot_en_passant_x = -1;
+extern int bot_en_passant_y = -1;
 
 extern int flipped;
 extern int is_selected_piece;
@@ -53,6 +73,12 @@ extern int bking_y;
 
 extern int wking_x;
 extern int wking_y;
+
+extern int bot_bking_x = 4;
+extern int bot_bking_y = 0;
+
+extern int bot_wking_x = 4;
+extern int bot_wking_y = 7;
 
 extern int piece_logic_for_moving;
 extern int sim_counter;
