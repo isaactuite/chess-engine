@@ -183,17 +183,7 @@ int check_piece_color(int x, int y, int mode){
         }
     }
 }
-void add_to_move_list(int x, int y){
-    int index;
-    for (int i=0; i<highlighted_squares_x[0]; i++){
-        index = move_list[0].count;
-        move_list[index].from_x = x;
-        move_list[index].from_y = y;
-        move_list[index].to_x = highlighted_squares_x[i+1];
-        move_list[index].to_y = highlighted_squares_y[i+1];
-        move_list[0].count++;
-    }
-}
+
 //function to check if a target is valid
 int is_valid_attack(int x, int y, int color){
 
@@ -394,7 +384,7 @@ int pawn_logic(int x, int y, int color, int mode){
             return 0;
         }
     } else if (mode == 2){
-        add_to_move_list(x, y);
+        
         return 0;
     }
 
@@ -458,7 +448,6 @@ int knight_logic(int x, int y, int color, int mode){
             return 0;
         }
     }else if (mode == 2){
-        add_to_move_list(x, y);
         return 0;
     }
 }
@@ -595,7 +584,6 @@ int rook_logic(int x, int y, int color, int mode){
             return 0;
         }
     }else if (mode == 2){
-        add_to_move_list(x, y);
         return 0;
     }
 }
@@ -730,7 +718,6 @@ int bishop_logic(int x, int y, int color, int mode){
             return 0;
         }
     }else if (mode == 2){
-        add_to_move_list(x, y);
         return 0;
     }
 }
@@ -979,7 +966,6 @@ int queen_logic(int x, int y, int color, int mode){
             return 0;
         }
     }else if (mode == 2){
-        add_to_move_list(x, y);
         return 0;
     }
 }
@@ -1064,7 +1050,6 @@ int king_logic(int x, int y, int color, int mode){
             return 0;
         }
     }else if (mode == 2){
-        add_to_move_list(x, y);
         return 0;
     }
 }

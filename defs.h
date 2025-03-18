@@ -1,6 +1,5 @@
 #ifndef DEFS_H
 #define DEFS_H
-
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_image.h>
 
@@ -17,12 +16,13 @@ typedef struct {
     int from_x, from_y;   // Current position
     int to_x, to_y;       // Target position
     int count;
-    int special;
     char moved_piece;
     char captured_piece;
     int castling[4];
     int en_pass_x;
     int en_pass_y;
+    int color;
+    int score;
 } Move;
 
 typedef struct {
@@ -58,13 +58,14 @@ extern int sim_castling_rights_ks;
 
 extern int turn_color; //1=white, 0=black
 extern int bot_color;
+extern int player_color;
 extern int turn_count; //pair values
 
 extern int en_passant_x;
 extern int en_passant_y;
 
-extern int bot_en_passant_x = -1;
-extern int bot_en_passant_y = -1;
+extern int bot_en_passant_x;
+extern int bot_en_passant_y;
 
 extern int flipped;
 extern int is_selected_piece;
@@ -74,11 +75,11 @@ extern int bking_y;
 extern int wking_x;
 extern int wking_y;
 
-extern int bot_bking_x = 4;
-extern int bot_bking_y = 0;
+extern int bot_bking_x;
+extern int bot_bking_y;
 
-extern int bot_wking_x = 4;
-extern int bot_wking_y = 7;
+extern int bot_wking_x;
+extern int bot_wking_y;
 
 extern int piece_logic_for_moving;
 extern int sim_counter;

@@ -6,6 +6,7 @@
 #include "SDL3_image/SDL_image.h"
 #include "defs.h"
 #include "game_logic.h"
+#include "bot.h"
 
 
 // Array to hold piece textures
@@ -132,7 +133,7 @@ void handle_mouse_event(SDL_Event *e) {
         
         // Check if a piece of the correct color is selected
         if (is_selected_piece == 0) {
-            if (check_piece_color(clicked_x, clicked_y, 0) == turn_color) {
+            if (check_piece_color(clicked_x, clicked_y, 0) == turn_color && check_piece_color(clicked_x, clicked_y, 0) == player_color) {
                 select_square(e->button.x, e->button.y); // Highlight legal moves
                 is_selected_piece = 1;
                 
@@ -239,6 +240,7 @@ void handle_mouse_event(SDL_Event *e) {
                     }
                     update_dynamic_board();
                     update_fake_board();
+                    match_bot_board();
 
                     
 
@@ -264,6 +266,12 @@ void handle_mouse_event(SDL_Event *e) {
                     } else{
                         printf("\nNOT CHECKMATE");
                     }
+                    int castling_rights[4] = {castling_rights_KS, castling_rights_QS, castling_rights_ks, castling_rights_qs};
+                    play_best_move(turn_color, castling_rights);
+                     // Redraw the board and pieces
+                     draw_board();
+                     draw_pieces();
+                     update_display();
                     return;
                 }
                 if (check_piece_color(clicked_x, clicked_y, 0) == turn_color) {
@@ -464,6 +472,17 @@ void loop(void) {
     }
 }
 int main(int argc, char** argv) {
+    while (!(player_color == 0 || player_color == 1)){
+        printf("Enter 0 for white, and 1 for black\n");
+        scanf("%d", &player_color);
+    }
+    
+    if (player_color == 0){
+        bot_color = 1;
+    } else if (player_color == 1){
+        bot_color = 0;
+        flipped = 1;
+    }
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
         return -1;

@@ -29,7 +29,11 @@ int sim_castling_rights_qs = 1;
 int sim_castling_rights_ks = 1;
 
 int turn_color =0; //0=white, 1=black
-int bot_color = 1;
+int bot_color;
+int player_color = -1;
+
+
+
 int turn_count = 0; //pair values
 
 int en_passant_x = -1;
