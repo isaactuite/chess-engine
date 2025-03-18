@@ -284,10 +284,30 @@ int is_valid_attack(int x, int y, int color){
     int piece_color = bot_check_piece_color(x, y);
     return piece_color == -1 ? 0 : ((piece_color != color) && (piece_color !=2));
 }
+void sim_move(int x, int y, int x_to, int y_to, int color, int en_pass, int *castling){
+    
+    char current_piece = bot_board[x][y];
+    char captured_piece = bot_board[x_to][y_to];
+    char passant_piece;
+    bot_board[x_to][y_to] = current_piece;
+    bot_board[x][y] = 'o';
+    if (en_pass){
+        passant_piece = bot_board[x_to][y];
+        bot_board[x_to][y] = 'o';
+    }
+    if (search_from_king(color) == 0){
+        add_to_move_list(x, y, x_to, y_to, en_pass, castling);
+
+    }
+    if (en_pass){
+        bot_board[x_to][y] = passant_piece;
+    }
+    bot_board[x_to][y_to] = captured_piece;
+    bot_board[x][y] = current_piece;
+}
 //individual piece logic
 int pawn_logic(int x, int y, int color, int mode, int *castling){
     int checkmate = 0;
-    int counter = 0;
     if (color == 1){
         //black
         if (y==1){
@@ -300,80 +320,32 @@ int pawn_logic(int x, int y, int color, int mode, int *castling){
                     break;
                 //don't have to check for check here, because it's not a capture
                 } else {
-                    bot_board[x][y+j] = bot_board[x][y];
-                    bot_board[x][y] = 'o';
-                    if (search_from_king(color) == 0){
-                        add_to_move_list(x, y, x, y+j, 0, castling);
- 
-                    }
-                    bot_board[x][y+j] = board[x][y+j];
-                    bot_board[x][y] = board[x][y];
-                    
+                    sim_move(x, y, x, y+j, color, 0, castling);
                 }
             
             }
         }
         else if (y!=1){
             if (bot_check_piece_color(x, y+1) == 2){
-                bot_board[x][y+1] = bot_board[x][y];
-                bot_board[x][y] = 'o';
-                //If it's not the pawns first move, check the square directly in front of it for empty square
-                if (search_from_king(color) == 0){
-                    add_to_move_list(x, y, x, y+1, 0, castling);
-                    counter++;
-                }
-                bot_board[x][y+1] = board[x][y+1];
-                bot_board[x][y] = board[x][y];
+
+                sim_move(x, y, x, y+1, color, 0, castling);
             }
         }
         
 
         //checks for pawn captures
         if ((bot_check_piece_color(x-1, y+1) == 0) && ((x-1>=0)&&(y+1<8))){
-            bot_board[x-1][y+1] = bot_board[x][y];
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x-1, y+1, 0, castling);
-                counter++;
-            }
-            bot_board[x-1][y+1] = board[x-1][y+1];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x-1, y+1, color, 0, castling);
         }
         if ((bot_check_piece_color(x+1, y+1) == 0) && ((x+1<8)&&(y+1<8))){
-            bot_board[x+1][y+1] = bot_board[x][y];
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x+1, y+1, 0, castling);
-                counter++;
-            }
-            bot_board[x+1][y+1] = board[x+1][y+1];
-            bot_board[x][y] = board[x][y];
-            
+            sim_move(x, y, x+1, y+1, color, 0, castling);
         }
         
         if ((bot_en_passant_x == x+1)  && (bot_en_passant_y == y)){
-            bot_board[x+1][y+1] = bot_board[x][y];
-            bot_board[x+1][y] = 'o';
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x+1, y+1,1, castling);
-                counter++;
-            }
-            bot_board[x+1][y+1] = board[x+1][y+1];
-            bot_board[x+1][y] = board[x+1][y];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x+1, y+1, color, 1, castling);
         }
         if ((bot_en_passant_x == x-1)  && (bot_en_passant_y == y)){
-            bot_board[x-1][y+1] = bot_board[x][y];
-            bot_board[x-1][y] = 'o';
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x-1, y+1, 1, castling);
-                counter++;
-            }
-            bot_board[x-1][y+1] = board[x-1][y+1];
-            bot_board[x-1][y] = board[x-1][y];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x-1, y+1, color, 1, castling);
         }
         
     
@@ -388,78 +360,30 @@ int pawn_logic(int x, int y, int color, int mode, int *castling){
                     
                     //if there is something blocking the pawns file movement, break
                     break;
-                //don't have to check for check here, because it's not a capture
                 } else {
-                    bot_board[x][y+j] = bot_board[x][y];
-                    bot_board[x][y] = 'o';
-                    if (search_from_king(color) == 0){
-                        add_to_move_list(x, y, x, y+j, 0, castling);
-                        counter++;
-                    }
-                    bot_board[x][y+j] = board[x][y+j];
-                    bot_board[x][y] = board[x][y];
+                    sim_move(x, y, x, y+j, color, 0, castling);
                 }
             
             }
         }else if (y!=6){
             if (bot_check_piece_color(x, y-1) == 2){
-                bot_board[x][y-1] = bot_board[x][y];
-                bot_board[x][y] = 'o';
-                //If it's not the pawns first move, check the square directly in front of it for empty square
-                if (search_from_king(color) == 0){
-                    add_to_move_list(x, y, x, y-1, 0, castling);
-                    counter++;
-                }
-                bot_board[x][y-1] = board[x][y-1];
-                bot_board[x][y] = board[x][y];
+                sim_move(x, y, x, y-1, color, 0, castling);
             }
         }
 
         //checks for pawn captures
         if ((bot_check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1>=0))){
-            bot_board[x-1][y-1] = bot_board[x][y];
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x-1, y-1, 0, castling);
-                counter++;
-            }
-            bot_board[x-1][y-1] = board[x-1][y-1];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x-1, y-1, color, 0, castling);
         }
         if ((bot_check_piece_color(x+1, y-1) == 1) && ((x+1<8)&&(y-1>=0))){
-            bot_board[x+1][y-1] = bot_board[x][y];
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x+1, y-1, 0, castling);
-                counter++;
-            }
-            bot_board[x+1][y-1] = board[x+1][y-1];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x+1, y-1, color, 0, castling);
             
         }
         if ((bot_en_passant_x == x+1)  && (bot_en_passant_y == y)){
-            bot_board[x+1][y-1] = bot_board[x][y];
-            bot_board[x+1][y] = 'o';
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x+1, y-1, 1, castling);
-                counter++;
-            }
-            bot_board[x+1][y-1] = board[x+1][y-1];
-            bot_board[x+1][y] = board[x+1][y];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x+1, y-1, color, 1, castling);
         }
         if ((bot_en_passant_x == x-1)  && (bot_en_passant_y == y)){
-            bot_board[x-1][y-1] = bot_board[x][y];
-            bot_board[x-1][y] = 'o';
-            bot_board[x][y] = 'o';
-            if (search_from_king(color) == 0){
-                add_to_move_list(x, y, x-1, y-1, 1, castling);
-                counter++;
-            }
-            bot_board[x-1][y-1] = board[x-1][y-1];
-            bot_board[x-1][y] = board[x-1][y];
-            bot_board[x][y] = board[x][y];
+            sim_move(x, y, x-1, y-1, color, 1, castling);
         }
     }
     if (mode == 1){
@@ -472,8 +396,7 @@ int pawn_logic(int x, int y, int color, int mode, int *castling){
 }
 int knight_logic(int x, int y, int color, int mode, int *castling){
     int checkmate = 0;
-   
-    int counter=1;
+    
 
     for (int i = -2; i<3; i++){
         
@@ -495,22 +418,7 @@ int knight_logic(int x, int y, int color, int mode, int *castling){
                 if (color == bot_check_piece_color(x+i, y+j)){
                     continue;
                 }
-                bot_board[x+i][y+j] = bot_board[x][y];
-                bot_board[x][y] = 'o';
-                if (search_from_king(color) ==0){
-                    if (is_valid_attack(x + i, y + j, color)){
-                        add_to_move_list(x, y, x+i, y+j, 0, castling);
-                        counter++;
-                    } else if (bot_check_piece_color(x+i, y+j)==2){
-                        add_to_move_list(x, y, x+i, y+j, 0, castling);
-                        counter++;
-                    }
-                }
-                bot_board[x+i][y+j] = board[x+i][y+j];
-                bot_board[x][y] = board[x][y];
-                
-
-                
+                sim_move(x, y, x+i, y+j, color, 0, castling);
             }
         }
     }
@@ -525,7 +433,6 @@ int knight_logic(int x, int y, int color, int mode, int *castling){
     }
 }
 int rook_logic(int x, int y, int color, int mode,int *castling){
-    int counter = 1;
     int checkmate = 0;
     
     
@@ -535,56 +442,14 @@ int rook_logic(int x, int y, int color, int mode,int *castling){
         if(bot_check_piece_color(x+i, y) == color){
             break;
         }
-        
-
-        bot_board[x+i][y] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i,y, color)){
-            
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-                bot_board[x+i][y] = board[x+i][y];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y) == 2){
-                
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y] = board[x+i][y];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y, color, 0, castling);
     }
     //up
     for (int j=-1; y+j>-1;j--){
         if(bot_check_piece_color(x, y+j) == color){
             break;
         }
-        
-
-        bot_board[x][y+j] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x, y+j, color)){
-            
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-                bot_board[x][y+j] = board[x][y+j];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x, y+j) == 2){
-                
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x][y+j] = board[x][y+j];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x, y+j, color, 0, castling);
     }
     //right
     for (int i=1; x+i<8; i++){
@@ -593,26 +458,7 @@ int rook_logic(int x, int y, int color, int mode,int *castling){
         }
         
 
-        bot_board[x+i][y] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y, color)){
-            
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-                bot_board[x+i][y] = board[x+i][y];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y) == 2){
-                
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y] = board[x+i][y];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y, color, 0, castling);
     }   
     //down
     for (int j=1; y+j<8;j++){
@@ -621,27 +467,7 @@ int rook_logic(int x, int y, int color, int mode,int *castling){
         }
         
 
-        bot_board[x][y+j] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x, y+j, color)){
-            
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-                bot_board[x][y+j] = board[x][y+j];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x, y+j) == 2){
-                
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x][y+j] = board[x][y+j];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x, y+j, color, 0, castling);
     }
 
     if (mode == 1){
@@ -653,8 +479,6 @@ int rook_logic(int x, int y, int color, int mode,int *castling){
 }
 int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
     int checkmate = 0;
-    
-    int counter = 1;
     //left up
     for (int i=-1; x+i>-1 && y+i>-1; i--){
         
@@ -662,27 +486,7 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
             break;
         }
         
-        bot_board[x+i][y+i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y+i, color)){
-            
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-                bot_board[x+i][y+i] = board[x+i][y+i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y+i) == 2){
-                
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y+i] = board[x+i][y+i];
-        bot_board[x][y] = board[x][y];
-        
+        sim_move(x, y, x+i, y+i, color, 0, castling);
     }
     //right up
     for (int i=1; x+i<8 && y-i>-1; i++){
@@ -691,26 +495,7 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x+i][y-i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y-i, color)){
-            
-                add_to_move_list(x, y, x+i, y-i, 0, castling);
-                counter+=1;
-                bot_board[x+i][y-i] = board[x+i][y-i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y-i) == 2){
-                
-                add_to_move_list(x, y, x+i, y-i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y-i] = board[x+i][y-i];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y-i, color, 0, castling);
     }
     //right down
     for (int i=1; x+i<8 && y+i<8; i++){
@@ -719,26 +504,7 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x+i][y+i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y+i, color)){
-            
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-                bot_board[x+i][y+i] = board[x+i][y+i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y+i) == 2){
-                
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y+i] = board[x+i][y+i];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y+i, color, 0, castling);
     }
     //left down
     for (int i=1; x-i>-1 && y+i<8; i++){
@@ -747,26 +513,7 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x-i][y+i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x-i, y+i, color)){
-            
-                add_to_move_list(x, y, x-i, y+i, 0, castling);
-                counter+=1;
-                bot_board[x-i][y+i]  = board[x-i][y+i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x-i, y+i) == 2){
-                
-                add_to_move_list(x, y, x-i, y+i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x-i][y+i]  = board[x-i][y+i];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x-i, y+i, color, 0, castling);
     }
     if (mode == 1){
         return checkmate;
@@ -774,36 +521,13 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
 }
 int bot_queen_logic(int x, int y, int color, int mode, int *castling){
     int checkmate = 0;
-   
-    int counter = 1;
-
     for (int i=-1; x+i>-1 && y+i>-1; i--){
         
         if(bot_check_piece_color(x+i, y+i) == color){
             break;
         }
         
-        bot_board[x+i][y+i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y+i, color)){
-            
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-                bot_board[x+i][y+i] = board[x+i][y+i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y+i) == 2){
-                
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y+i] = board[x+i][y+i];
-        bot_board[x][y] = board[x][y];
-        
+        sim_move(x, y, x+i, y+i, color, 0, castling);
     }
     //right up
     for (int i=1; x+i<8 && y-i>-1; i++){
@@ -812,26 +536,7 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x+i][y-i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y-i, color)){
-            
-                add_to_move_list(x, y, x+i, y-i, 0, castling);
-                counter+=1;
-                bot_board[x+i][y-i] = board[x+i][y-i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y-i) == 2){
-                
-                add_to_move_list(x, y, x+i, y-i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y-i] = board[x+i][y-i];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y-i, color, 0, castling);
     }
     //right down
     for (int i=1; x+i<8 && y+i<8; i++){
@@ -840,26 +545,7 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x+i][y+i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y+i, color)){
-            
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-                bot_board[x+i][y+i] = board[x+i][y+i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y+i) == 2){
-                
-                add_to_move_list(x, y, x+i, y+i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y+i] = board[x+i][y+i];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y+i, color, 0, castling);
     }
     //left down
     for (int i=1; x-i>-1 && y+i<8; i++){
@@ -868,83 +554,22 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x-i][y+i] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x-i, y+i, color)){
-            
-                add_to_move_list(x, y, x-i, y+i, 0, castling);
-                counter+=1;
-                bot_board[x-i][y+i]  = board[x-i][y+i];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x-i, y+i) == 2){
-                
-                add_to_move_list(x, y, x-i, y+i, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x-i][y+i]  = board[x-i][y+i];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x-i, y+i, color, 0, castling);
     }
     //left
     for (int i=-1; x+i>-1; i--){
-        
+    
         if(bot_check_piece_color(x+i, y) == color){
             break;
-        } 
-        
-
-        bot_board[x+i][y] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i,y, color)){
-            
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-                bot_board[x+i][y] = board[x+i][y];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y) == 2){
-                
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-            
-            }
         }
-        bot_board[x+i][y] = board[x+i][y];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y, color, 0, castling);
     }
     //up
     for (int j=-1; y+j>-1;j--){
         if(bot_check_piece_color(x, y+j) == color){
             break;
         }
-        
-
-        bot_board[x][y+j] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x, y+j, color)){
-            
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-                bot_board[x][y+j] = board[x][y+j];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x, y+j) == 2){
-                
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x][y+j] = board[x][y+j];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x, y+j, color, 0, castling);
     }
     //right
     for (int i=1; x+i<8; i++){
@@ -953,26 +578,7 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x+i][y] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x+i, y, color)){
-            
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-                bot_board[x+i][y] = board[x+i][y];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x+i, y) == 2){
-                
-                add_to_move_list(x, y, x+i, y, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x+i][y] = board[x+i][y];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x+i, y, color, 0, castling);
     }   
     //down
     for (int j=1; y+j<8;j++){
@@ -981,27 +587,7 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        bot_board[x][y+j] = bot_board[x][y];
-        bot_board[x][y] = 'o';
-
-        if (search_from_king(color)==0){
-            if (is_valid_attack(x, y+j, color)){
-            
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-                bot_board[x][y+j] = board[x][y+j];
-                bot_board[x][y] = board[x][y];
-                break;
-                
-            }else if (bot_check_piece_color(x, y+j) == 2){
-                
-                add_to_move_list(x, y, x, y+j, 0, castling);
-                counter+=1;
-            
-            }
-        }
-        bot_board[x][y+j] = board[x][y+j];
-        bot_board[x][y] = board[x][y];
+        sim_move(x, y, x, y+j, color, 0, castling);
     }
     if (mode == 1){
         return checkmate;
@@ -1019,12 +605,8 @@ int king_logic(int x, int y, int color, int mode, int *castling){
         bot_temp_king_x = bot_bking_x;
         bot_temp_king_y = bot_bking_y;
     }
-    
-
-    
-    int counter = 1;
-    
-    counter = check_for_castle(color, counter, castling);
+        
+    check_for_castle(color, castling);
 
     for(int i = -1;i<2; i++){
         if (x+i>=8 ||x+i<0){
@@ -1056,10 +638,8 @@ int king_logic(int x, int y, int color, int mode, int *castling){
             if (search_from_king(color) == 0){
                 if (is_valid_attack(x + i, y + j, color)){
                     add_to_move_list(x, y, x+i, y+j, 0, castling);
-                    counter++;
                 } else if (bot_check_piece_color(x+i, y+j)==2){
                     add_to_move_list(x, y, x+i, y+j, 0, castling);
-                    counter++;
                 }
             }
             if (color == 0){
@@ -1067,7 +647,6 @@ int king_logic(int x, int y, int color, int mode, int *castling){
                 bot_board[bot_temp_king_x][bot_temp_king_y] = board[bot_temp_king_x][bot_temp_king_y];
                 bot_wking_x = bot_temp_king_x;
                 bot_wking_y=bot_temp_king_y;
-                
             } else if (color == 1){
                 bot_board[bot_bking_x][bot_bking_y] = board[bot_bking_x][bot_bking_y];
                 bot_board[bot_temp_king_x][bot_temp_king_y] = board[bot_temp_king_x][bot_temp_king_y];
@@ -1431,7 +1010,7 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
 
     return -1;
 }
-int check_for_castle(int color, int counter, int *castling){
+int check_for_castle(int color, int *castling){
     if (color == 0){
         int temp_bot_wking_x = bot_wking_x;
         
@@ -1449,7 +1028,6 @@ int check_for_castle(int color, int counter, int *castling){
                         bot_wking_x = 2;
                         if (!search_from_king(color)){
                             add_to_move_list(4, 7, 2, 7, 0, castling);
-                            counter++;
                         }
                     }
                 }
@@ -1470,7 +1048,6 @@ int check_for_castle(int color, int counter, int *castling){
                         bot_wking_x = 6;
                         if (!search_from_king(color)){
                             add_to_move_list(4, 7, 6, 7, 0, castling);
-                            counter++;
                         }
                     }
                 }
@@ -1496,7 +1073,6 @@ int check_for_castle(int color, int counter, int *castling){
                         bot_bking_x = 2;
                         if (!search_from_king(color)){
                             add_to_move_list(4, 0, 2, 0, 0, castling);
-                            counter++;
                         }
                     }
                 }
@@ -1517,7 +1093,6 @@ int check_for_castle(int color, int counter, int *castling){
                         bot_bking_x = 6;
                         if (!search_from_king(color)){
                             add_to_move_list(4, 0, 6, 0, 0, castling);
-                            counter++;
                         }
                     }
                 }
@@ -1528,7 +1103,6 @@ int check_for_castle(int color, int counter, int *castling){
         }
         bot_bking_x = temp_bot_bking_x;
     }
-    return counter;
     
 }
 int is_checkmate(castling){
