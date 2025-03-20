@@ -122,7 +122,7 @@ int check_piece_color(int x, int y, int mode){
                 //white
                 
                 return 0;
-            case 'o':
+            case '.':
                 
                 return 2;
             default:
@@ -148,7 +148,7 @@ int check_piece_color(int x, int y, int mode){
             case 'K':
                 return 0;
 
-            case 'o':
+            case '.':
                 return 2;
             default:
 
@@ -156,32 +156,7 @@ int check_piece_color(int x, int y, int mode){
                 return -1;
         }
     }
-    else if (mode == 1){
-        switch(bot_board[x][y]){
-            case 'p':
-            case 'r':
-            case 'n':
-            case 'b':
-            case 'q':
-            case 'k':
-
-                return 1;
-            case 'P':
-            case 'R':
-            case 'N':
-            case 'B':
-            case 'Q':
-            case 'K':
-                return 0;
-
-            case 'o':
-                return 2;
-            default:
-
-
-                return -1;
-        }
-    }
+    
 }
 
 //function to check if a target is valid
@@ -211,7 +186,7 @@ int pawn_logic(int x, int y, int color, int mode){
                 //don't have to check for check here, because it's not a capture
                 } else {
                     fake_board[x][y+j] = fake_board[x][y];
-                    fake_board[x][y] = 'o';
+                    fake_board[x][y] = '.';
                     if (search_from_king(color) == 0){
                         highlighted_squares(x, y+j, counter);
                         counter++;
@@ -226,7 +201,7 @@ int pawn_logic(int x, int y, int color, int mode){
         else if (y!=1){
             if (check_piece_color(x, y+1, 0) == 2){
                 fake_board[x][y+1] = fake_board[x][y];
-                fake_board[x][y] = 'o';
+                fake_board[x][y] = '.';
                 //If it's not the pawns first move, check the square directly in front of it for empty square
                 if (search_from_king(color) == 0){
                     highlighted_squares(x, y+1, counter);
@@ -241,7 +216,7 @@ int pawn_logic(int x, int y, int color, int mode){
         //checks for pawn captures
         if ((check_piece_color(x-1, y+1, 0) == 0) && ((x-1>=0)&&(y+1<8))){
             fake_board[x-1][y+1] = fake_board[x][y];
-            fake_board[x][y] = 'o';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x-1, y+1, counter);
                 counter++;
@@ -251,7 +226,7 @@ int pawn_logic(int x, int y, int color, int mode){
         }
         if ((check_piece_color(x+1, y+1, 0) == 0) && ((x+1<8)&&(y+1<8))){
             fake_board[x+1][y+1] = fake_board[x][y];
-            fake_board[x][y] = 'o';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x+1, y+1, counter);
                 counter++;
@@ -263,8 +238,8 @@ int pawn_logic(int x, int y, int color, int mode){
         
         if ((en_passant_x == x+1)  && (en_passant_y == y)){
             fake_board[x+1][y+1] = fake_board[x][y];
-            fake_board[x+1][y] = 'o';
-            fake_board[x][y] = 'o';
+            fake_board[x+1][y] = '.';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x+1, y+1, counter);
                 counter++;
@@ -275,8 +250,8 @@ int pawn_logic(int x, int y, int color, int mode){
         }
         if ((en_passant_x == x-1)  && (en_passant_y == y)){
             fake_board[x-1][y+1] = fake_board[x][y];
-            fake_board[x-1][y] = 'o';
-            fake_board[x][y] = 'o';
+            fake_board[x-1][y] = '.';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x-1, y+1, counter);
                 counter++;
@@ -301,7 +276,7 @@ int pawn_logic(int x, int y, int color, int mode){
                 //don't have to check for check here, because it's not a capture
                 } else {
                     fake_board[x][y+j] = fake_board[x][y];
-                    fake_board[x][y] = 'o';
+                    fake_board[x][y] = '.';
                     if (search_from_king(color) == 0){
                         highlighted_squares(x, y+j, counter);
                         counter++;
@@ -314,7 +289,7 @@ int pawn_logic(int x, int y, int color, int mode){
         }else if (y!=6){
             if (check_piece_color(x, y-1, 0) == 2){
                 fake_board[x][y-1] = fake_board[x][y];
-                fake_board[x][y] = 'o';
+                fake_board[x][y] = '.';
                 //If it's not the pawns first move, check the square directly in front of it for empty square
                 if (search_from_king(color) == 0){
                     highlighted_squares(x, y-1, counter);
@@ -328,7 +303,7 @@ int pawn_logic(int x, int y, int color, int mode){
         //checks for pawn captures
         if ((check_piece_color(x-1, y-1, 0) == 1) && ((x-1>=0)&&(y-1>=0))){
             fake_board[x-1][y-1] = fake_board[x][y];
-            fake_board[x][y] = 'o';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x-1, y-1, counter);
                 counter++;
@@ -338,7 +313,7 @@ int pawn_logic(int x, int y, int color, int mode){
         }
         if ((check_piece_color(x+1, y-1, 0) == 1) && ((x+1<8)&&(y-1>=0))){
             fake_board[x+1][y-1] = fake_board[x][y];
-            fake_board[x][y] = 'o';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x+1, y-1, counter);
                 counter++;
@@ -349,8 +324,8 @@ int pawn_logic(int x, int y, int color, int mode){
         }
         if ((en_passant_x == x+1)  && (en_passant_y == y)){
             fake_board[x+1][y-1] = fake_board[x][y];
-            fake_board[x+1][y] = 'o';
-            fake_board[x][y] = 'o';
+            fake_board[x+1][y] = '.';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x+1, y-1, counter);
                 counter++;
@@ -361,8 +336,8 @@ int pawn_logic(int x, int y, int color, int mode){
         }
         if ((en_passant_x == x-1)  && (en_passant_y == y)){
             fake_board[x-1][y-1] = fake_board[x][y];
-            fake_board[x-1][y] = 'o';
-            fake_board[x][y] = 'o';
+            fake_board[x-1][y] = '.';
+            fake_board[x][y] = '.';
             if (search_from_king(color) == 0){
                 highlighted_squares(x-1, y-1, counter);
                 counter++;
@@ -416,7 +391,7 @@ int knight_logic(int x, int y, int color, int mode){
                     continue;
                 }
                 fake_board[x+i][y+j] = fake_board[x][y];
-                fake_board[x][y] = 'o';
+                fake_board[x][y] = '.';
                 if (search_from_king(color) ==0){
                     if (is_valid_attack(x + i, y + j, color)){
                         highlighted_squares(x+i, y+j, counter);
@@ -467,7 +442,7 @@ int rook_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i,y, color)){
             
@@ -495,7 +470,7 @@ int rook_logic(int x, int y, int color, int mode){
         
 
         fake_board[x][y+j] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x, y+j, color)){
             
@@ -523,7 +498,7 @@ int rook_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y, color)){
             
@@ -551,7 +526,7 @@ int rook_logic(int x, int y, int color, int mode){
         
 
         fake_board[x][y+j] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
 
         if (search_from_king(color)==0){
             if (is_valid_attack(x, y+j, color)){
@@ -602,7 +577,7 @@ int bishop_logic(int x, int y, int color, int mode){
         }
         
         fake_board[x+i][y+i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y+i, color)){
             
@@ -631,7 +606,7 @@ int bishop_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y-i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y-i, color)){
             
@@ -659,7 +634,7 @@ int bishop_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y+i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y+i, color)){
             
@@ -687,7 +662,7 @@ int bishop_logic(int x, int y, int color, int mode){
         
 
         fake_board[x-i][y+i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x-i, y+i, color)){
             
@@ -736,7 +711,7 @@ int queen_logic(int x, int y, int color, int mode){
         }
         
         fake_board[x+i][y+i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y+i, color)){
             
@@ -765,7 +740,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y-i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y-i, color)){
             
@@ -793,7 +768,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y+i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y+i, color)){
             
@@ -821,7 +796,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x-i][y+i] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x-i, y+i, color)){
             
@@ -850,7 +825,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i,y, color)){
             
@@ -878,7 +853,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x][y+j] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x, y+j, color)){
             
@@ -906,7 +881,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x+i][y] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
         if (search_from_king(color)==0){
             if (is_valid_attack(x+i, y, color)){
             
@@ -934,7 +909,7 @@ int queen_logic(int x, int y, int color, int mode){
         
 
         fake_board[x][y+j] = fake_board[x][y];
-        fake_board[x][y] = 'o';
+        fake_board[x][y] = '.';
 
         if (search_from_king(color)==0){
             if (is_valid_attack(x, y+j, color)){
@@ -1009,12 +984,12 @@ int king_logic(int x, int y, int color, int mode){
                 wking_x +=i;
                 wking_y+=j;
                 fake_board[wking_x][wking_y] = 'K';
-                fake_board[temp_king_x][temp_king_y] = 'o';
+                fake_board[temp_king_x][temp_king_y] = '.';
             } else if (color == 1){
                 bking_x +=i;
                 bking_y+=j;
                 fake_board[bking_x][bking_y] = 'k';
-                fake_board[temp_king_x][temp_king_y] = 'o';
+                fake_board[temp_king_x][temp_king_y] = '.';
             }
             if (search_from_king(color) == 0){
                 if (is_valid_attack(x + i, y + j, color)){
@@ -1349,28 +1324,22 @@ int search_from_king(int color){
     return 0;
 }
 int king_search_help(int x, int y, int color, char piece_to_check1, char piece_to_check2){
-    piece_logic_for_moving = 0;
     
     if (color==0){
 
         if (check_piece_color(x, y, 1) == 0){
-            piece_logic_for_moving = 1;
             
             return 0;
         }
         if (check_piece_color(x, y, 1) == 2){
-            piece_logic_for_moving = 1;
             
             return 2;
         }
         if (check_piece_color(x, y, 1) == 1){
             
             if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){
-                
-                piece_logic_for_moving = 1;
-                return 3;
+            return 3;
             }
-            piece_logic_for_moving = 1;
             
             return 1;
         }
@@ -1379,28 +1348,22 @@ int king_search_help(int x, int y, int color, char piece_to_check1, char piece_t
 
     else if (color==1){
         if (check_piece_color(x, y, 1) == 1){
-            piece_logic_for_moving = 1;
             
             return 0;
         }
         if (check_piece_color(x, y, 1) == 2){
-            piece_logic_for_moving = 1;
            
             return 2;
         }
         if (check_piece_color(x, y, 1) == 0){
             
-            if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){
-                piece_logic_for_moving = 1;
-                
+            if (fake_board[x][y] == piece_to_check1 || fake_board[x][y] == piece_to_check2){                
                 return 3;
             }
-            piece_logic_for_moving = 1;
            
             return 1;
         }
     }
-    piece_logic_for_moving = 1;
 
     return -1;
 }
@@ -1408,15 +1371,15 @@ int check_for_castle(int color, int counter){
     if (color == 0){
         int temp_wking_x = wking_x;
         if (castling_rights_QS){
-            if (board[3][7] == 'o' && board[2][7] == 'o' && board[1][7] == 'o' &&board[0][7] == 'R'){
+            if (board[3][7] == '.' && board[2][7] == '.' && board[1][7] == '.' &&board[0][7] == 'R'){
                 if (!search_from_king(color)){
                     fake_board[3][7] = 'K';
-                    fake_board[4][7] = 'o';
+                    fake_board[4][7] = '.';
                     wking_x = 3;
                     
                     if (!search_from_king(color)){
                         fake_board[2][7] = 'K';
-                        fake_board[3][7] = 'o';
+                        fake_board[3][7] = '.';
                         wking_x = 2;
                         if (!search_from_king(color)){
                             highlighted_squares(2, 7, counter);
@@ -1424,20 +1387,20 @@ int check_for_castle(int color, int counter){
                         }
                     }
                 }
-                fake_board[3][7] = 'o';
-                fake_board[2][7] = 'o';
+                fake_board[3][7] = '.';
+                fake_board[2][7] = '.';
                 fake_board[4][7] = 'K';
             }
         }
         if (castling_rights_KS){
-            if (board[5][7] == 'o' && board[6][7] == 'o' && board[7][7] == 'R'){
+            if (board[5][7] == '.' && board[6][7] == '.' && board[7][7] == 'R'){
                 if (!search_from_king(color)){
                     fake_board[5][7] = 'K';
-                    fake_board[4][7] = 'o';
+                    fake_board[4][7] = '.';
                     wking_x = 5;
                     if (!search_from_king(color)){
                         fake_board[6][7] = 'K';
-                        fake_board[5][7] = 'o';
+                        fake_board[5][7] = '.';
                         wking_x = 6;
                         if (!search_from_king(color)){
                             highlighted_squares(6, 7, counter);
@@ -1445,8 +1408,8 @@ int check_for_castle(int color, int counter){
                         }
                     }
                 }
-                fake_board[3][7] = 'o';
-                fake_board[2][7] = 'o';
+                fake_board[3][7] = '.';
+                fake_board[2][7] = '.';
                 fake_board[4][7] = 'K';
             }
         }
@@ -1456,14 +1419,14 @@ int check_for_castle(int color, int counter){
         int temp_bking_x = bking_x;
 
         if (castling_rights_qs){
-            if (board[3][0] == 'o' && board[2][0] == 'o' && board[1][0] == 'o' &&board[0][0] == 'r'){
+            if (board[3][0] == '.' && board[2][0] == '.' && board[1][0] == '.' &&board[0][0] == 'r'){
                 if (!search_from_king(color)){
                     fake_board[3][0] = 'K';
-                    fake_board[4][0] = 'o';
+                    fake_board[4][0] = '.';
                     bking_x = 3;
                     if (!search_from_king(color)){
                         fake_board[2][0] = 'K';
-                        fake_board[3][0] = 'o';
+                        fake_board[3][0] = '.';
                         bking_x = 2;
                         if (!search_from_king(color)){
                             highlighted_squares(2, 0, counter);
@@ -1471,20 +1434,20 @@ int check_for_castle(int color, int counter){
                         }
                     }
                 }
-                fake_board[3][0] = 'o';
-                fake_board[2][0] = 'o';
+                fake_board[3][0] = '.';
+                fake_board[2][0] = '.';
                 fake_board[4][0] = 'K';
             }
         }
         if (castling_rights_ks){
-            if (board[5][0] == 'o' && board[6][0] == 'o' && board[7][0] == 'r'){
+            if (board[5][0] == '.' && board[6][0] == '.' && board[7][0] == 'r'){
                 if (!search_from_king(color)){
                     fake_board[5][0] = 'K';
-                    fake_board[4][0] = 'o';
+                    fake_board[4][0] = '.';
                     bking_x = 5;
                     if (!search_from_king(color)){
                         fake_board[6][0] = 'K';
-                        fake_board[5][0] = 'o';
+                        fake_board[5][0] = '.';
                         bking_x = 6;
                         if (!search_from_king(color)){
                             highlighted_squares(6, 0, counter);
@@ -1492,8 +1455,8 @@ int check_for_castle(int color, int counter){
                         }
                     }
                 }
-                fake_board[3][0] = 'o';
-                fake_board[2][0] = 'o';
+                fake_board[3][0] = '.';
+                fake_board[2][0] = '.';
                 fake_board[4][0] = 'K';
             }
         }

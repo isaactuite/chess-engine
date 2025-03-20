@@ -147,7 +147,7 @@ void handle_mouse_event(SDL_Event *e) {
                 if (highlighted_squares_x[i + 1] == clicked_x && highlighted_squares_y[i + 1] == clicked_y) {
                     // Perform move
                     board[clicked_x][clicked_y] = board[selected_x][selected_y];
-                    board[selected_x][selected_y] = 'o';
+                    board[selected_x][selected_y] = '.';
                     if (board[clicked_x][clicked_y] == 'p' || board[clicked_x][clicked_y] == 'P'){
 
                         if (check_en_passant(selected_y, clicked_y)){
@@ -158,13 +158,13 @@ void handle_mouse_event(SDL_Event *e) {
                             if (check_piece_color(clicked_x, clicked_y, 0)==0){
                                 //white
                                 if (clicked_x == en_passant_x && clicked_y==en_passant_y-1){
-                                    board[clicked_x][en_passant_y] = 'o';
+                                    board[clicked_x][en_passant_y] = '.';
                                 }
                             }
                             if (check_piece_color(clicked_x, clicked_y, 0)==1){
                                 //white
                                 if (clicked_x == en_passant_x && clicked_y==en_passant_y+1){
-                                    board[clicked_x][en_passant_y] = 'o';
+                                    board[clicked_x][en_passant_y] = '.';
                                 }
                             }
                             en_passant_x = 0;
@@ -200,22 +200,22 @@ void handle_mouse_event(SDL_Event *e) {
                         
                         if (castling_rights_qs && clicked_x == 2 && clicked_y == 0){
                             board[3][0] = 'r';
-                            board[0][0] = 'o';
+                            board[0][0] = '.';
                             castling_rights_ks = 0;
                             castling_rights_qs = 0;
                         } else if (castling_rights_ks && clicked_x == 6 && clicked_y == 0){
                             board[5][0] = 'r';
-                            board[7][0] = 'o';
+                            board[7][0] = '.';
                             castling_rights_ks = 0;
                             castling_rights_qs = 0;
                         } else if (castling_rights_QS && clicked_x == 2 && clicked_y == 7){
                             board[3][7] = 'R';
-                            board[0][7] = 'o';
+                            board[0][7] = '.';
                             castling_rights_KS = 0;
                             castling_rights_QS = 0;
                         }else if (castling_rights_KS && clicked_x == 6 && clicked_y == 7){
                             board[5][7] = 'R';
-                            board[7][7] = 'o';
+                            board[7][7] = '.';
                             castling_rights_KS = 0;
                             castling_rights_QS = 0;
                         }

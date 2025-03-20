@@ -80,8 +80,8 @@ void print_bot_board(Move s, int depth){
     }
     printf("\nMove Played:\nDepth: %d\nFrom: (%d,%d)\nTo:(%d,%d)\n"
         "Moved Piece: '%c'\nCaptured Piece: '%c'\nCastling: (%d,%d,%d,%d)\n"
-        "En Passant: (%d,%d)\nScore: %d",depth, s.from_x,s.from_y,s.to_x,s.to_y,s.moved_piece,s.captured_piece,
-        s.castling[0],s.castling[1],s.castling[2],s.castling[3],s.en_pass_x, s.en_pass_y, s.score);
+        "En Passant: (%d,%d)\nScore: %d, color: %d",depth, s.from_x,s.from_y,s.to_x,s.to_y,s.moved_piece,s.captured_piece,
+        s.castling[0],s.castling[1],s.castling[2],s.castling[3],s.en_pass_x, s.en_pass_y, s.score, s.color);
     printf("\n-------------------\n");
     
 }
@@ -93,7 +93,7 @@ int is_endgame(){
     int piece_count = 0;
     for (int i = 0; i<8; i++){
         for (int j = 0; j<8; j++){
-            if (bot_board[i][j]!='o'){
+            if (bot_board[i][j]!='.'){
                 piece_count++;
             }
         }
@@ -142,7 +142,7 @@ int piece_value(int i,int j){
             break;
         case 'k':
             if (is_endgame()){
-                eval+= king_pts_late[i][7-j];
+                eval-= king_pts_late[i][7-j];
             } else{
                 eval-= king_pts_mid[i][7-j];
             }
@@ -158,11 +158,8 @@ int evaluate(){
     int eval = 0;
     for (int i = 0; i<8; i++){
         for (int j = 0; j<8; j++){
-            if (bot_check_piece_color(i, j)  == bot_color){
-                eval+=piece_value(i, j);
-            }
-            if (bot_check_piece_color(i, j)  == player_color){
-                eval+=piece_value(i, j);
+            if (bot_board[i][j] != '.') {  // If there's a piece on this square
+                eval += piece_value(i, j);
             }
         }
     }
@@ -173,46 +170,47 @@ int evaluate(){
 void make_move(Move s, int depth) {
     // Handle en passant
     if (s.en_pass_x != -1) {
-        bot_board[s.en_pass_x][s.from_y] = 'o';
+        bot_board[s.en_pass_x][s.from_y] = '.';
     }
 
     // Handle castling
     if (s.moved_piece == 'K') {
         if (s.from_x - s.to_x == 2) { // Queen-side castling
             bot_board[3][7] = 'R';
-            bot_board[0][7] = 'o';
+            bot_board[0][7] = '.';
         } else if (s.from_x - s.to_x == -2) { // King-side castling
             bot_board[5][7] = 'R';
-            bot_board[7][7] = 'o';
+            bot_board[7][7] = '.';
         }
     } else if (s.moved_piece == 'k') {
         if (s.from_x - s.to_x == 2) {
             bot_board[3][0] = 'r';
-            bot_board[0][0] = 'o';
+            bot_board[0][0] = '.';
         } else if (s.from_x - s.to_x == -2) {
             bot_board[5][0] = 'r';
-            bot_board[7][0] = 'o';
+            bot_board[7][0] = '.';
         }
     }
 
     //handle promotions
     if (s.moved_piece == 'P' && s.to_y == 0){
         bot_board[s.to_x][s.to_y] = 'Q';
-        bot_board[s.from_x][s.from_y] = 'o';
-        return;
+        bot_board[s.from_x][s.from_y] = '.';
+        
     }else if (s.moved_piece == 'p' && s.to_y == 7){
         bot_board[s.to_x][s.to_y] = 'q';
-        bot_board[s.from_x][s.from_y] = 'o';
-        return;
-    }
+        bot_board[s.from_x][s.from_y] = '.';
+    }else{
 
-    // Normal move
-    bot_board[s.to_x][s.to_y] = bot_board[s.from_x][s.from_y];
-    bot_board[s.from_x][s.from_y] = 'o';
+        // Normal move
+        bot_board[s.to_x][s.to_y] = bot_board[s.from_x][s.from_y];
+        bot_board[s.from_x][s.from_y] = '.';
+    }
     print_bot_board(s,depth);
+
 }
 
-void unmake_move(Move s) {
+int unmake_move(Move s, int depth) {
     // Restore en passant
     if (s.en_pass_x != -1) {
         bot_board[s.en_pass_x][s.from_y] = (s.color == 0) ? 'p' : 'P';
@@ -222,36 +220,33 @@ void unmake_move(Move s) {
     if (s.moved_piece == 'K') {
         if (s.from_x - s.to_x == 2) { // Queen-side
             bot_board[0][7] = 'R';
-            bot_board[3][7] = 'o';
+            bot_board[3][7] = '.';
         } else if (s.from_x - s.to_x == -2) { // King-side
             bot_board[7][7] = 'R';
-            bot_board[5][7] = 'o';
+            bot_board[5][7] = '.';
         }
     } else if (s.moved_piece == 'k') {
         if (s.from_x - s.to_x == 2) {
             bot_board[0][0] = 'r';
-            bot_board[3][0] = 'o';
+            bot_board[3][0] = '.';
         } else if (s.from_x - s.to_x == -2) {
             bot_board[7][0] = 'r';
-            bot_board[5][0] = 'o';
+            bot_board[5][0] = '.';
         }
     }
 
     if (s.moved_piece == 'P' && s.to_y == 0){
         bot_board[s.to_x][s.to_y] = s.captured_piece;
         bot_board[s.from_x][s.from_y] = 'P';
-        return;
+        
     }else if (s.moved_piece == 'p' && s.to_y == 7){
         bot_board[s.to_x][s.to_y] = s.captured_piece;
         bot_board[s.from_x][s.from_y] = 'p';
-        return;
+    }else{
+        // Restore pieces
+        bot_board[s.from_x][s.from_y] = s.moved_piece;
+        bot_board[s.to_x][s.to_y] = s.captured_piece;
     }
-
-    // Restore pieces
-    bot_board[s.from_x][s.from_y] = s.moved_piece;
-    bot_board[s.to_x][s.to_y] = s.captured_piece;
-    
-    
 
 }
 
@@ -259,6 +254,7 @@ void unmake_move(Move s) {
 void pushMove(Move m) {
     history.moves[history.top++] = m;
 }
+
 Move popMove() {
     return history.moves[--history.top];
 }
@@ -275,42 +271,42 @@ void play_move(Move s){
         s.castling[0],s.castling[1],s.castling[2],s.castling[3],s.en_pass_x, s.en_pass_y, s.score);
         // Handle en passant
         if (s.en_pass_x != -1) {
-            board[s.en_pass_x][s.from_y] = 'o';
+            board[s.en_pass_x][s.from_y] = '.';
         }
     
         // Handle castling
         if (s.moved_piece == 'K') {
             if (s.from_x - s.to_x == 2) { // Queen-side castling
                 board[3][7] = 'R';
-                board[0][7] = 'o';
+                board[0][7] = '.';
             } else if (s.from_x - s.to_x == -2) { // King-side castling
                 board[5][7] = 'R';
-                board[7][7] = 'o';
+                board[7][7] = '.';
             }
         } else if (s.moved_piece == 'k') {
             if (s.from_x - s.to_x == 2) {
                 board[3][0] = 'r';
-                board[0][0] = 'o';
+                board[0][0] = '.';
             } else if (s.from_x - s.to_x == -2) {
                 board[5][0] = 'r';
-                board[7][0] = 'o';
+                board[7][0] = '.';
             }
         }
     
         //handle promotions
         if (s.moved_piece == 'P' && s.to_y == 0){
             board[s.to_x][s.to_y] = 'Q';
-            board[s.from_x][s.from_y] = 'o';
+            board[s.from_x][s.from_y] = '.';
             return;
         }else if (s.moved_piece == 'p' && s.to_y == 7){
             board[s.to_x][s.to_y] = 'q';
-            board[s.from_x][s.from_y] = 'o';
+            board[s.from_x][s.from_y] = '.';
             return;
         }
     
         // Normal move
         board[s.to_x][s.to_y] = board[s.from_x][s.from_y];
-        board[s.from_x][s.from_y] = 'o';
+        board[s.from_x][s.from_y] = '.';
 }
 void update_castling_rights(Move move, int *castling) {
     // White king moved - lose both castling rights
@@ -348,7 +344,7 @@ void update_castling_rights(Move move, int *castling) {
 }
 void play_best_move(int color, int *castling) {
     printf("\nplay_best_move(%d, castling)", color);
-    int depth = 5; // Set search depth (tune for performance vs. strength)
+    int depth = 2; // Set search depth (tune for performance vs. strength)
     
     // Debug the initial state
     printf("\nInitial board state before move generation:");
@@ -376,7 +372,7 @@ void play_best_move(int color, int *castling) {
     }
     
     // Choose best move
-    Move best_move = alphaBetaMax(-2000000, 2000000, depth, color, castling);
+    Move best_move = alphaBetaMax(-2000000, 2000000, depth, 1, castling);
     
     // Restore castling rights before playing the move
     memcpy(castling, saved_castling, 4 * sizeof(int));
@@ -406,8 +402,8 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
     best_move.from_y = -1;
     best_move.to_x = -1;
     best_move.to_y = -1;
-    best_move.moved_piece = 'o';
-    best_move.captured_piece = 'o';
+    best_move.moved_piece = '.';
+    best_move.captured_piece = '.';
     best_move.score = -2000000;
     best_move.en_pass_x = -1;
     best_move.en_pass_y = -1;
@@ -418,6 +414,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
         return best_move;
     }
     
+
     // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
@@ -435,7 +432,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
         }
         return best_move;
     }
-    
+
     // Search through all legal moves
     for (int i = 0; i < move_list[0].count; i++) {
         Move current_move = move_list[i];
@@ -450,14 +447,21 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
         
         // Unmake the move
         Move last_move = popMove(); // Pop the move
-        unmake_move(last_move);
+        unmake_move(last_move, depthleft);
         
         // Restore castling rights
         memcpy(castling, saved_castling, 4 * sizeof(int));
         
         // Update best move if this move is better
         if (score > best_move.score) {
-            best_move = current_move;
+            best_move.from_x = current_move.from_x;
+            best_move.from_y = current_move.from_y;
+            best_move.to_x = current_move.to_x;
+            best_move.to_y = current_move.to_y;
+            best_move.moved_piece = current_move.moved_piece;
+            best_move.captured_piece = current_move.captured_piece;
+            best_move.en_pass_x = current_move.en_pass_x;
+            best_move.en_pass_y = current_move.en_pass_y;
             best_move.score = score;
             
             // Update alpha
@@ -466,10 +470,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
             }
         }
         
-        // Beta cutoff
-        if (alpha >= beta) {
-            break;
-        }
+        
     }
     
     return best_move;
@@ -481,8 +482,8 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) 
     best_move.from_y = -1;
     best_move.to_x = -1;
     best_move.to_y = -1;
-    best_move.moved_piece = 'o';
-    best_move.captured_piece = 'o';
+    best_move.moved_piece = '.';
+    best_move.captured_piece = '.';
     best_move.score = 2000000;
     best_move.en_pass_x = -1;
     best_move.en_pass_y = -1;
@@ -525,14 +526,21 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) 
         
         // Unmake the move
         Move last_move = popMove(); // Pop the move
-        unmake_move(last_move);
+        unmake_move(last_move, depthleft);
         
         // Restore castling rights
         memcpy(castling, saved_castling, 4 * sizeof(int));
         
         // Update best move if this move is better (lower score for min player)
         if (score < best_move.score) {
-            best_move = current_move;
+            best_move.from_x = current_move.from_x;
+            best_move.from_y = current_move.from_y;
+            best_move.to_x = current_move.to_x;
+            best_move.to_y = current_move.to_y;
+            best_move.moved_piece = current_move.moved_piece;
+            best_move.captured_piece = current_move.captured_piece;
+            best_move.en_pass_x = current_move.en_pass_x;
+            best_move.en_pass_y = current_move.en_pass_y;
             best_move.score = score;
             
             // Update beta
@@ -541,10 +549,7 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) 
             }
         }
         
-        // Alpha cutoff
-        if (alpha >= beta) {
-            break;
-        }
+        
     }
     
     return best_move;
@@ -594,7 +599,7 @@ int bot_check_piece_color(int x, int y){
             return 0;
             break;
 
-        case 'o':
+        case '.':
             return 2;
             break;
         default:
@@ -635,10 +640,10 @@ int sim_move(int x, int y, int x_to, int y_to, int color, int en_pass, int *cast
     char captured_piece = bot_board[x_to][y_to];
     char passant_piece;
     bot_board[x_to][y_to] = current_piece;
-    bot_board[x][y] = 'o';
+    bot_board[x][y] = '.';
     if (en_pass){
         passant_piece = bot_board[x_to][y];
-        bot_board[x_to][y] = 'o';
+        bot_board[x_to][y] = '.';
     }
     if (bot_search_from_king(color) == 0){
         if (mode == 1){
@@ -975,7 +980,8 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
             break;
         }else{
             checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
-        }    }
+        }    
+    }
     //right
     for (int i=1; x+i<8; i++){
         if(bot_check_piece_color(x+i, y) == color){
@@ -1411,43 +1417,43 @@ int bot_check_for_castle(int color, int *castling){
         
 
         if (castling[1]){
-            if (bot_board[3][7] == 'o' && bot_board[2][7] == 'o' && bot_board[1][7] == 'o' &&bot_board[0][7] == 'R'){
+            if (bot_board[3][7] == '.' && bot_board[2][7] == '.' && bot_board[1][7] == '.' &&bot_board[0][7] == 'R'){
                 if (!bot_search_from_king(color)){
                     bot_board[3][7] = 'K';
-                    bot_board[4][7] = 'o';
+                    bot_board[4][7] = '.';
                     bot_wking_x = 3;
                     
                     if (!bot_search_from_king(color)){
                         bot_board[2][7] = 'K';
-                        bot_board[3][7] = 'o';
+                        bot_board[3][7] = '.';
                         bot_wking_x = 2;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 7, 2, 7, 0, castling, color,'K', 'o');
+                            add_to_move_list(4, 7, 2, 7, 0, castling, color,'K', '.');
                         }
                     }
                 }
-                bot_board[3][7] = 'o';
-                bot_board[2][7] = 'o';
+                bot_board[3][7] = '.';
+                bot_board[2][7] = '.';
                 bot_board[4][7] = 'K';
             }
         }
         if (castling[0]){
-            if (bot_board[5][7] == 'o' && bot_board[6][7] == 'o' && bot_board[7][7] == 'R'){
+            if (bot_board[5][7] == '.' && bot_board[6][7] == '.' && bot_board[7][7] == 'R'){
                 if (!bot_search_from_king(color)){
                     bot_board[5][7] = 'K';
-                    bot_board[4][7] = 'o';
+                    bot_board[4][7] = '.';
                     bot_wking_x = 5;
                     if (!bot_search_from_king(color)){
                         bot_board[6][7] = 'K';
-                        bot_board[5][7] = 'o';
+                        bot_board[5][7] = '.';
                         bot_wking_x = 6;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 7, 6, 7, 0, castling, color,'K', 'o');
+                            add_to_move_list(4, 7, 6, 7, 0, castling, color,'K', '.');
                         }
                     }
                 }
-                bot_board[3][7] = 'o';
-                bot_board[2][7] = 'o';
+                bot_board[3][7] = '.';
+                bot_board[2][7] = '.';
                 bot_board[4][7] = 'K';
             }
         }
@@ -1457,42 +1463,42 @@ int bot_check_for_castle(int color, int *castling){
         int temp_bot_bking_x = bot_bking_x;
 
         if (castling[3]){
-            if (bot_board[3][0] == 'o' && bot_board[2][0] == 'o' && bot_board[1][0] == 'o' &&bot_board[0][0] == 'r'){
+            if (bot_board[3][0] == '.' && bot_board[2][0] == '.' && bot_board[1][0] == '.' &&bot_board[0][0] == 'r'){
                 if (!bot_search_from_king(color)){
                     bot_board[3][0] = 'k';
-                    bot_board[4][0] = 'o';
+                    bot_board[4][0] = '.';
                     bot_bking_x = 3;
                     if (!bot_search_from_king(color)){
                         bot_board[2][0] = 'k';
-                        bot_board[3][0] = 'o';
+                        bot_board[3][0] = '.';
                         bot_bking_x = 2;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 0, 2, 0, 0, castling, color,'k', 'o');
+                            add_to_move_list(4, 0, 2, 0, 0, castling, color,'k', '.');
                         }
                     }
                 }
-                bot_board[3][0] = 'o';
-                bot_board[2][0] = 'o';
+                bot_board[3][0] = '.';
+                bot_board[2][0] = '.';
                 bot_board[4][0] = 'k';
             }
         }
         if (castling[2]){
-            if (bot_board[5][0] == 'o' && bot_board[6][0] == 'o' && bot_board[7][0] == 'r'){
+            if (bot_board[5][0] == '.' && bot_board[6][0] == '.' && bot_board[7][0] == 'r'){
                 if (!bot_search_from_king(color)){
                     bot_board[5][0] = 'k';
-                    bot_board[4][0] = 'o';
+                    bot_board[4][0] = '.';
                     bot_bking_x = 5;
                     if (!bot_search_from_king(color)){
                         bot_board[6][0] = 'k';
-                        bot_board[5][0] = 'o';
+                        bot_board[5][0] = '.';
                         bot_bking_x = 6;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 0, 6, 0, 0, castling, color,'k', 'o');
+                            add_to_move_list(4, 0, 6, 0, 0, castling, color,'k', '.');
                         }
                     }
                 }
-                bot_board[3][0] = 'o';
-                bot_board[2][0] = 'o';
+                bot_board[3][0] = '.';
+                bot_board[2][0] = '.';
                 bot_board[4][0] = 'k';
             }
         }
