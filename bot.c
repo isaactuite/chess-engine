@@ -70,7 +70,7 @@ void match_bot_board(){
         }
     }
 }
-void print_bot_board(Move s){
+void print_bot_board(Move s, int depth){
     printf("\n\n-------------------");
     for (int i=0; i<8; i++){
         printf("\n");
@@ -78,9 +78,9 @@ void print_bot_board(Move s){
             printf("%c", bot_board[j][i]);
         }
     }
-    printf("\nMove Played:\nFrom: (%d,%d)\nTo:(%d,%d)\n"
+    printf("\nMove Played:\nDepth: %d\nFrom: (%d,%d)\nTo:(%d,%d)\n"
         "Moved Piece: '%c'\nCaptured Piece: '%c'\nCastling: (%d,%d,%d,%d)\n"
-        "En Passant: (%d,%d)\nScore: %d", s.from_x,s.from_y,s.to_x,s.to_y,s.moved_piece,s.captured_piece,
+        "En Passant: (%d,%d)\nScore: %d",depth, s.from_x,s.from_y,s.to_x,s.to_y,s.moved_piece,s.captured_piece,
         s.castling[0],s.castling[1],s.castling[2],s.castling[3],s.en_pass_x, s.en_pass_y, s.score);
     printf("\n-------------------\n");
     
@@ -162,7 +162,7 @@ int evaluate(){
                 eval+=piece_value(i, j);
             }
             if (bot_check_piece_color(i, j)  == player_color){
-                eval-=piece_value(i, j);
+                eval+=piece_value(i, j);
             }
         }
     }
@@ -170,7 +170,7 @@ int evaluate(){
 }
 
 
-void make_move(Move s) {
+void make_move(Move s, int depth) {
     // Handle en passant
     if (s.en_pass_x != -1) {
         bot_board[s.en_pass_x][s.from_y] = 'o';
@@ -209,6 +209,7 @@ void make_move(Move s) {
     // Normal move
     bot_board[s.to_x][s.to_y] = bot_board[s.from_x][s.from_y];
     bot_board[s.from_x][s.from_y] = 'o';
+    print_bot_board(s,depth);
 }
 
 void unmake_move(Move s) {
@@ -249,6 +250,9 @@ void unmake_move(Move s) {
     // Restore pieces
     bot_board[s.from_x][s.from_y] = s.moved_piece;
     bot_board[s.to_x][s.to_y] = s.captured_piece;
+    
+    
+
 }
 
 
@@ -258,7 +262,11 @@ void pushMove(Move m) {
 Move popMove() {
     return history.moves[--history.top];
 }
+int bot_is_valid_attack(int x, int y, int color){
 
+    int piece_color = bot_check_piece_color(x, y);
+    return piece_color == -1 ? 0 : ((piece_color != color) && (piece_color !=2));
+}
 void play_move(Move s){
     printf("\n-------------------------------\nMove Played:\nFrom: (%d,%d)\nTo:(%d,%d)\n"
         "Moved Piece: '%c'\nCaptured Piece: '%c'\nCastling: (%d,%d,%d,%d)\n"
@@ -340,31 +348,54 @@ void update_castling_rights(Move move, int *castling) {
 }
 void play_best_move(int color, int *castling) {
     printf("\nplay_best_move(%d, castling)", color);
-    int depth = 4; // Set search depth (tune for performance vs. strength)
+    int depth = 5; // Set search depth (tune for performance vs. strength)
+    
+    // Debug the initial state
+    printf("\nInitial board state before move generation:");
+    
+    // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
-
-    Move best_move = alphaBetaMax(-2000000, 2000000, depth, color, castling);
-
-    memcpy(castling, saved_castling, 4 * sizeof(int));
-
-    if (best_move.from_x != -1) {
-        printf("\nAI Move: (%d, %d) to (%d, %d)\n", 
-               best_move.from_x, best_move.from_y, 
-               best_move.to_x, best_move.to_y);
-        play_move(best_move); // Play the chosen move
-        
-        // Update castling rights based on the move
-        update_castling_rights(best_move, castling);
-    } else {
-        printf("No valid moves found!\n");
+    
+    // Clear move list and generate moves first
+    move_list[0].count = 0;
+    generate_moves(color, castling);
+    printf("\nGenerated %d moves for color %d", move_list[0].count, color);
+    
+    // Check if there are any moves
+    if (move_list[0].count == 0) {
+        printf("\nNo valid moves found!");
         // Check if in checkmate or stalemate
         if (bot_is_checkmate(castling)) {
-            printf("Checkmate! Game over.\n");
+            printf("\nCheckmate! Game over.");
         } else {
-            printf("Stalemate! Game drawn.\n");
+            printf("\nStalemate! Game drawn.");
         }
+        
+        return;
     }
+    
+    // Choose best move
+    Move best_move = alphaBetaMax(-2000000, 2000000, depth, color, castling);
+    
+    // Restore castling rights before playing the move
+    memcpy(castling, saved_castling, 4 * sizeof(int));
+    
+    // Debug move info
+    printf("\nBest move:\nFrom: (%d,%d)\nTo:(%d,%d)\n"
+           "Moved Piece: '%c'\nCaptured Piece: '%c'\nScore: %d",
+           best_move.from_x, best_move.from_y,
+           best_move.to_x, best_move.to_y,
+           best_move.moved_piece, best_move.captured_piece, 
+           best_move.score);
+    
+    // Play the move
+    play_move(best_move);
+    
+    // Update castling rights based on the move
+    update_castling_rights(best_move, castling);
+    
+    // Switch turns
     turn_color = !turn_color;
 }
 
@@ -372,99 +403,150 @@ void play_best_move(int color, int *castling) {
 Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) {
     Move best_move;
     best_move.from_x = -1;
-    int best_value = -2000001;
-
+    best_move.from_y = -1;
+    best_move.to_x = -1;
+    best_move.to_y = -1;
+    best_move.moved_piece = 'o';
+    best_move.captured_piece = 'o';
+    best_move.score = -2000000;
+    best_move.en_pass_x = -1;
+    best_move.en_pass_y = -1;
+    
+    // Terminal node - evaluate position
     if (depthleft == 0) {
-        best_move.score = evaluate(); // Evaluate board position
+        best_move.score = evaluate();
         return best_move;
     }
-
+    
+    // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
+    
+    // Generate legal moves
+    move_list[0].count = 0;
+    generate_moves(color, castling);
+    
+    // No moves - either checkmate or stalemate
     if (move_list[0].count == 0) {
-        // Check for checkmate or stalemate
         if (bot_is_checkmate(castling)) {
-            best_move.score = -1000000; // Checkmate (adjust based on your evaluate function)
+            best_move.score = -1000000;  // Checkmate is very bad for max player
         } else {
-            best_move.score = 0; // Stalemate
+            best_move.score = 0;         // Stalemate is a draw
         }
         return best_move;
     }
-
-    generate_moves(color, castling); // Create legal moves
-
+    
+    // Search through all legal moves
     for (int i = 0; i < move_list[0].count; i++) {
         Move current_move = move_list[i];
-
-        // Apply move
-        make_move(current_move);
-        pushMove(current_move); // Save move for undo
-
+        
+        // Make the move on the board
+        make_move(current_move, depthleft);
+        pushMove(current_move);
+        
+        // Recursively search for opponent's best response
         Move response = alphaBetaMin(alpha, beta, depthleft - 1, !color, castling);
         int score = response.score;
-        // Undo move
-        unmake_move(popMove());
-
+        
+        // Unmake the move
+        Move last_move = popMove(); // Pop the move
+        unmake_move(last_move);
+        
+        // Restore castling rights
         memcpy(castling, saved_castling, 4 * sizeof(int));
-
-        if (score > best_value) {
-            best_value = score;
+        
+        // Update best move if this move is better
+        if (score > best_move.score) {
             best_move = current_move;
-            best_move.score = best_value;
+            best_move.score = score;
+            
+            // Update alpha
             if (score > alpha) {
-                print_bot_board(best_move);
                 alpha = score;
             }
         }
+        
+        // Beta cutoff
         if (alpha >= beta) {
-            break; // Beta cutoff (prune branch)
+            break;
         }
     }
-
+    
     return best_move;
 }
 
 Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) {
     Move best_move;
     best_move.from_x = -1;
-    int best_value = 2000001;
-
-
+    best_move.from_y = -1;
+    best_move.to_x = -1;
+    best_move.to_y = -1;
+    best_move.moved_piece = 'o';
+    best_move.captured_piece = 'o';
+    best_move.score = 2000000;
+    best_move.en_pass_x = -1;
+    best_move.en_pass_y = -1;
+    
+    // Terminal node - evaluate position
     if (depthleft == 0) {
         best_move.score = evaluate();
         return best_move;
     }
-
+    
+    // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
-
-    generate_moves(color, castling); // Create legal moves
-
+    
+    // Generate legal moves
+    move_list[0].count = 0;
+    generate_moves(color, castling);
+    
+    // No moves - either checkmate or stalemate
+    if (move_list[0].count == 0) {
+        if (bot_is_checkmate(castling)) {
+            best_move.score = 1000000;  // Checkmate is very good for min player
+        } else {
+            best_move.score = 0;        // Stalemate is a draw
+        }
+        return best_move;
+    }
+    
+    // Search through all legal moves
     for (int i = 0; i < move_list[0].count; i++) {
         Move current_move = move_list[i];
-
-        // Apply move
-        make_move(current_move);
-        pushMove(current_move); // Save move for undo
-
+        
+        // Make the move on the board
+        make_move(current_move,depthleft);
+        pushMove(current_move);
+        
+        // Recursively search for opponent's best response
         Move response = alphaBetaMax(alpha, beta, depthleft - 1, !color, castling);
         int score = response.score;
-        // Undo move
-        unmake_move(popMove());
+        
+        // Unmake the move
+        Move last_move = popMove(); // Pop the move
+        unmake_move(last_move);
+        
+        // Restore castling rights
         memcpy(castling, saved_castling, 4 * sizeof(int));
+        
+        // Update best move if this move is better (lower score for min player)
         if (score < best_move.score) {
             best_move = current_move;
             best_move.score = score;
-
+            
+            // Update beta
             if (score < beta) {
                 beta = score;
             }
         }
+        
+        // Alpha cutoff
         if (alpha >= beta) {
-            break; // Alpha cutoff (prune branch)
+            break;
         }
     }
-
+    
     return best_move;
 }
 
@@ -707,32 +789,47 @@ int bot_rook_logic(int x, int y, int color, int mode,int *castling){
         if(bot_check_piece_color(x+i, y) == color){
             break;
         }
-        checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y, color)){
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        }
     }
     //up
     for (int j=-1; y+j>-1;j--){
         if(bot_check_piece_color(x, y+j) == color){
             break;
         }
-        checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
-    }
+        if (bot_is_valid_attack(x, y+j, color)){
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+        }    }
     //right
     for (int i=1; x+i<8; i++){
         if(bot_check_piece_color(x+i, y) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y, color)){
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        }
     }   
     //down
     for (int j=1; y+j<8;j++){
         if(bot_check_piece_color(x, y+j) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+        if (bot_is_valid_attack(x, y+j, color)){
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+        }    
     }
 
     if (mode == 1){
@@ -750,8 +847,12 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
         if(bot_check_piece_color(x+i, y+i) == color){
             break;
         }
-        
-        checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y+i, color)){
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        }
     }
     //right up
     for (int i=1; x+i<8 && y-i>-1; i++){
@@ -760,25 +861,36 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y-i, color)){
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+        }
     }
     //right down
     for (int i=1; x+i<8 && y+i<8; i++){
         if(bot_check_piece_color(x+i, y+i) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y+i, color)){
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        }
     }
     //left down
     for (int i=1; x-i>-1 && y+i<8; i++){
         if(bot_check_piece_color(x-i, y+i) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x-i, y+i, color)){
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+        }
     }
     if (mode == 1){
         return checkmate;
@@ -789,13 +901,18 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling){
 }
 int bot_queen_logic(int x, int y, int color, int mode, int *castling){
     int checkmate = 0;
+    //left up
     for (int i=-1; x+i>-1 && y+i>-1; i--){
         
         if(bot_check_piece_color(x+i, y+i) == color){
             break;
         }
-        
-        checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y+i, color)){
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        }
     }
     //right up
     for (int i=1; x+i<8 && y-i>-1; i++){
@@ -804,58 +921,84 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling){
         }
         
 
-        checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y-i, color)){
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+        }
     }
     //right down
     for (int i=1; x+i<8 && y+i<8; i++){
         if(bot_check_piece_color(x+i, y+i) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y+i, color)){
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+        }
     }
     //left down
     for (int i=1; x-i>-1 && y+i<8; i++){
         if(bot_check_piece_color(x-i, y+i) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+        if (bot_is_valid_attack(x-i, y+i, color)){
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+        }
     }
-    //left
-    for (int i=-1; x+i>-1; i--){
+     //left
+     for (int i=-1; x+i>-1; i--){
     
         if(bot_check_piece_color(x+i, y) == color){
             break;
         }
-        checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y, color)){
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        }
     }
     //up
     for (int j=-1; y+j>-1;j--){
         if(bot_check_piece_color(x, y+j) == color){
             break;
         }
-        checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
-    }
+        if (bot_is_valid_attack(x, y+j, color)){
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+        }    }
     //right
     for (int i=1; x+i<8; i++){
         if(bot_check_piece_color(x+i, y) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        if (bot_is_valid_attack(x+i, y, color)){
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+        }
     }   
     //down
     for (int j=1; y+j<8;j++){
         if(bot_check_piece_color(x, y+j) == color){
             break;
         }
-        
-
-        checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+        if (bot_is_valid_attack(x, y+j, color)){
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            break;
+        }else{
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+        }    
     }
     if (mode == 1){
         return checkmate;

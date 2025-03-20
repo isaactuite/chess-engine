@@ -26,7 +26,7 @@ typedef struct {
 } Move;
 
 typedef struct {
-    Move moves[1024];
+    Move moves[300];
     int top;
 } MoveStack;
 extern MoveStack history;
