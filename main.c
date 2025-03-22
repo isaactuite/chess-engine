@@ -267,7 +267,7 @@ void handle_mouse_event(SDL_Event *e) {
                         printf("\nNOT CHECKMATE");
                     }
                     int castling_rights[4] = {castling_rights_KS, castling_rights_QS, castling_rights_ks, castling_rights_qs};
-                    play_best_move(turn_color, castling_rights);
+                    play_best_move(1, castling_rights);
                      // Redraw the board and pieces
                      draw_board();
                      draw_pieces();

@@ -178,35 +178,40 @@ void make_move(Move s, int depth) {
         if (s.from_x - s.to_x == 2) { // Queen-side castling
             bot_board[3][7] = 'R';
             bot_board[0][7] = '.';
-        } else if (s.from_x - s.to_x == -2) { // King-side castling
+        }
+        else if (s.from_x - s.to_x == -2) { // King-side castling
             bot_board[5][7] = 'R';
             bot_board[7][7] = '.';
         }
-    } else if (s.moved_piece == 'k') {
+    }
+    else if (s.moved_piece == 'k') {
         if (s.from_x - s.to_x == 2) {
             bot_board[3][0] = 'r';
             bot_board[0][0] = '.';
-        } else if (s.from_x - s.to_x == -2) {
+        }
+        else if (s.from_x - s.to_x == -2) {
             bot_board[5][0] = 'r';
             bot_board[7][0] = '.';
         }
     }
 
     //handle promotions
-    if (s.moved_piece == 'P' && s.to_y == 0){
+    if (s.moved_piece == 'P' && s.to_y == 0) {
         bot_board[s.to_x][s.to_y] = 'Q';
         bot_board[s.from_x][s.from_y] = '.';
-        
-    }else if (s.moved_piece == 'p' && s.to_y == 7){
+
+    }
+    else if (s.moved_piece == 'p' && s.to_y == 7) {
         bot_board[s.to_x][s.to_y] = 'q';
         bot_board[s.from_x][s.from_y] = '.';
-    }else{
+    }
+    else {
 
         // Normal move
         bot_board[s.to_x][s.to_y] = bot_board[s.from_x][s.from_y];
         bot_board[s.from_x][s.from_y] = '.';
     }
-    print_bot_board(s,depth);
+    print_bot_board(s, depth);
 
 }
 
@@ -221,28 +226,33 @@ int unmake_move(Move s, int depth) {
         if (s.from_x - s.to_x == 2) { // Queen-side
             bot_board[0][7] = 'R';
             bot_board[3][7] = '.';
-        } else if (s.from_x - s.to_x == -2) { // King-side
+        }
+        else if (s.from_x - s.to_x == -2) { // King-side
             bot_board[7][7] = 'R';
             bot_board[5][7] = '.';
         }
-    } else if (s.moved_piece == 'k') {
+    }
+    else if (s.moved_piece == 'k') {
         if (s.from_x - s.to_x == 2) {
             bot_board[0][0] = 'r';
             bot_board[3][0] = '.';
-        } else if (s.from_x - s.to_x == -2) {
+        }
+        else if (s.from_x - s.to_x == -2) {
             bot_board[7][0] = 'r';
             bot_board[5][0] = '.';
         }
     }
 
-    if (s.moved_piece == 'P' && s.to_y == 0){
+    if (s.moved_piece == 'P' && s.to_y == 0) {
         bot_board[s.to_x][s.to_y] = s.captured_piece;
         bot_board[s.from_x][s.from_y] = 'P';
-        
-    }else if (s.moved_piece == 'p' && s.to_y == 7){
+
+    }
+    else if (s.moved_piece == 'p' && s.to_y == 7) {
         bot_board[s.to_x][s.to_y] = s.captured_piece;
         bot_board[s.from_x][s.from_y] = 'p';
-    }else{
+    }
+    else {
         // Restore pieces
         bot_board[s.from_x][s.from_y] = s.moved_piece;
         bot_board[s.to_x][s.to_y] = s.captured_piece;
@@ -258,57 +268,61 @@ void pushMove(Move m) {
 Move popMove() {
     return history.moves[--history.top];
 }
-int bot_is_valid_attack(int x, int y, int color){
+int bot_is_valid_attack(int x, int y, int color) {
 
     int piece_color = bot_check_piece_color(x, y);
-    return piece_color == -1 ? 0 : ((piece_color != color) && (piece_color !=2));
+    return piece_color == -1 ? 0 : ((piece_color != color) && (piece_color != 2));
 }
-void play_move(Move s){
+void play_move(Move s) {
     printf("\n-------------------------------\nMove Played:\nFrom: (%d,%d)\nTo:(%d,%d)\n"
         "Moved Piece: '%c'\nCaptured Piece: '%c'\nCastling: (%d,%d,%d,%d)\n"
         "En Passant: (%d,%d)\nScore: %d\n------------------------------- ",
-        s.from_x,s.from_y,s.to_x,s.to_y,s.moved_piece,s.captured_piece,
-        s.castling[0],s.castling[1],s.castling[2],s.castling[3],s.en_pass_x, s.en_pass_y, s.score);
-        // Handle en passant
-        if (s.en_pass_x != -1) {
-            board[s.en_pass_x][s.from_y] = '.';
+        s.from_x, s.from_y, s.to_x, s.to_y, s.moved_piece, s.captured_piece,
+        s.castling[0], s.castling[1], s.castling[2], s.castling[3], s.en_pass_x, s.en_pass_y, s.score);
+    // Handle en passant
+    if (s.en_pass_x != -1) {
+        board[s.en_pass_x][s.from_y] = '.';
+    }
+
+    // Handle castling
+    if (s.moved_piece == 'K') {
+        if (s.from_x - s.to_x == 2) { // Queen-side castling
+            board[3][7] = 'R';
+            board[0][7] = '.';
         }
-    
-        // Handle castling
-        if (s.moved_piece == 'K') {
-            if (s.from_x - s.to_x == 2) { // Queen-side castling
-                board[3][7] = 'R';
-                board[0][7] = '.';
-            } else if (s.from_x - s.to_x == -2) { // King-side castling
-                board[5][7] = 'R';
-                board[7][7] = '.';
-            }
-        } else if (s.moved_piece == 'k') {
-            if (s.from_x - s.to_x == 2) {
-                board[3][0] = 'r';
-                board[0][0] = '.';
-            } else if (s.from_x - s.to_x == -2) {
-                board[5][0] = 'r';
-                board[7][0] = '.';
-            }
+        else if (s.from_x - s.to_x == -2) { // King-side castling
+            board[5][7] = 'R';
+            board[7][7] = '.';
         }
-    
-        //handle promotions
-        if (s.moved_piece == 'P' && s.to_y == 0){
-            board[s.to_x][s.to_y] = 'Q';
-            board[s.from_x][s.from_y] = '.';
-            return;
-        }else if (s.moved_piece == 'p' && s.to_y == 7){
-            board[s.to_x][s.to_y] = 'q';
-            board[s.from_x][s.from_y] = '.';
-            return;
+    }
+    else if (s.moved_piece == 'k') {
+        if (s.from_x - s.to_x == 2) {
+            board[3][0] = 'r';
+            board[0][0] = '.';
         }
-    
-        // Normal move
-        board[s.to_x][s.to_y] = board[s.from_x][s.from_y];
+        else if (s.from_x - s.to_x == -2) {
+            board[5][0] = 'r';
+            board[7][0] = '.';
+        }
+    }
+
+    //handle promotions
+    if (s.moved_piece == 'P' && s.to_y == 0) {
+        board[s.to_x][s.to_y] = 'Q';
         board[s.from_x][s.from_y] = '.';
+        return;
+    }
+    else if (s.moved_piece == 'p' && s.to_y == 7) {
+        board[s.to_x][s.to_y] = 'q';
+        board[s.from_x][s.from_y] = '.';
+        return;
+    }
+
+    // Normal move
+    board[s.to_x][s.to_y] = board[s.from_x][s.from_y];
+    board[s.from_x][s.from_y] = '.';
 }
-void update_castling_rights(Move move, int *castling) {
+void update_castling_rights(Move move, int* castling) {
     // White king moved - lose both castling rights
     if (move.moved_piece == 'K') {
         castling[0] = 0; // Queen-side
@@ -342,61 +356,62 @@ void update_castling_rights(Move move, int *castling) {
         }
     }
 }
-void play_best_move(int color, int *castling) {
+void play_best_move(int color, int* castling) {
     printf("\nplay_best_move(%d, castling)", color);
-    int depth = 2; // Set search depth (tune for performance vs. strength)
-    
+    int depth = 5; // Set search depth (tune for performance vs. strength)
+
     // Debug the initial state
     printf("\nInitial board state before move generation:");
-    
+
     // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
-    
+
     // Clear move list and generate moves first
     move_list[0].count = 0;
     generate_moves(color, castling);
     printf("\nGenerated %d moves for color %d", move_list[0].count, color);
-    
+
     // Check if there are any moves
     if (move_list[0].count == 0) {
         printf("\nNo valid moves found!");
         // Check if in checkmate or stalemate
-        if (bot_is_checkmate(castling)) {
+        if (bot_is_checkmate(castling, color)) {
             printf("\nCheckmate! Game over.");
-        } else {
+        }
+        else {
             printf("\nStalemate! Game drawn.");
         }
-        
+
         return;
     }
-    
+
     // Choose best move
     Move best_move = alphaBetaMax(-2000000, 2000000, depth, 1, castling);
-    
+
     // Restore castling rights before playing the move
     memcpy(castling, saved_castling, 4 * sizeof(int));
-    
+
     // Debug move info
     printf("\nBest move:\nFrom: (%d,%d)\nTo:(%d,%d)\n"
-           "Moved Piece: '%c'\nCaptured Piece: '%c'\nScore: %d",
-           best_move.from_x, best_move.from_y,
-           best_move.to_x, best_move.to_y,
-           best_move.moved_piece, best_move.captured_piece, 
-           best_move.score);
-    
+        "Moved Piece: '%c'\nCaptured Piece: '%c'\nScore: %d",
+        best_move.from_x, best_move.from_y,
+        best_move.to_x, best_move.to_y,
+        best_move.moved_piece, best_move.captured_piece,
+        best_move.score);
+
     // Play the move
     play_move(best_move);
-    
+
     // Update castling rights based on the move
     update_castling_rights(best_move, castling);
-    
+
     // Switch turns
-    turn_color = !turn_color;
+
 }
 
 
-Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) {
+Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling) {
     Move best_move;
     best_move.from_x = -1;
     best_move.from_y = -1;
@@ -407,27 +422,28 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
     best_move.score = -2000000;
     best_move.en_pass_x = -1;
     best_move.en_pass_y = -1;
-    
+
     // Terminal node - evaluate position
     if (depthleft == 0) {
         best_move.score = evaluate();
         return best_move;
     }
-    
+
 
     // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
-    
+
     // Generate legal moves
     move_list[0].count = 0;
     generate_moves(color, castling);
-    
+
     // No moves - either checkmate or stalemate
     if (move_list[0].count == 0) {
-        if (bot_is_checkmate(castling)) {
+        if (bot_is_checkmate(castling, color)) {
             best_move.score = -1000000;  // Checkmate is very bad for max player
-        } else {
+        }
+        else {
             best_move.score = 0;         // Stalemate is a draw
         }
         return best_move;
@@ -436,22 +452,22 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
     // Search through all legal moves
     for (int i = 0; i < move_list[0].count; i++) {
         Move current_move = move_list[i];
-        
+
         // Make the move on the board
         make_move(current_move, depthleft);
         pushMove(current_move);
-        
+
         // Recursively search for opponent's best response
         Move response = alphaBetaMin(alpha, beta, depthleft - 1, !color, castling);
         int score = response.score;
-        
+
         // Unmake the move
         Move last_move = popMove(); // Pop the move
         unmake_move(last_move, depthleft);
-        
+
         // Restore castling rights
         memcpy(castling, saved_castling, 4 * sizeof(int));
-        
+
         // Update best move if this move is better
         if (score > best_move.score) {
             best_move.from_x = current_move.from_x;
@@ -463,20 +479,20 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling) 
             best_move.en_pass_x = current_move.en_pass_x;
             best_move.en_pass_y = current_move.en_pass_y;
             best_move.score = score;
-            
+
             // Update alpha
             if (score > alpha) {
                 alpha = score;
             }
         }
-        
-        
+
+
     }
-    
+
     return best_move;
 }
 
-Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) {
+Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling) {
     Move best_move;
     best_move.from_x = -1;
     best_move.from_y = -1;
@@ -487,50 +503,51 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) 
     best_move.score = 2000000;
     best_move.en_pass_x = -1;
     best_move.en_pass_y = -1;
-    
+
     // Terminal node - evaluate position
     if (depthleft == 0) {
         best_move.score = evaluate();
         return best_move;
     }
-    
+
     // Save castling rights
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
-    
+
     // Generate legal moves
     move_list[0].count = 0;
     generate_moves(color, castling);
-    
+
     // No moves - either checkmate or stalemate
     if (move_list[0].count == 0) {
-        if (bot_is_checkmate(castling)) {
+        if (bot_is_checkmate(castling, color)) {
             best_move.score = 1000000;  // Checkmate is very good for min player
-        } else {
+        }
+        else {
             best_move.score = 0;        // Stalemate is a draw
         }
         return best_move;
     }
-    
+
     // Search through all legal moves
     for (int i = 0; i < move_list[0].count; i++) {
         Move current_move = move_list[i];
-        
+
         // Make the move on the board
-        make_move(current_move,depthleft);
+        make_move(current_move, depthleft);
         pushMove(current_move);
-        
+
         // Recursively search for opponent's best response
         Move response = alphaBetaMax(alpha, beta, depthleft - 1, !color, castling);
         int score = response.score;
-        
+
         // Unmake the move
         Move last_move = popMove(); // Pop the move
         unmake_move(last_move, depthleft);
-        
+
         // Restore castling rights
         memcpy(castling, saved_castling, 4 * sizeof(int));
-        
+
         // Update best move if this move is better (lower score for min player)
         if (score < best_move.score) {
             best_move.from_x = current_move.from_x;
@@ -542,20 +559,18 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling) 
             best_move.en_pass_x = current_move.en_pass_x;
             best_move.en_pass_y = current_move.en_pass_y;
             best_move.score = score;
-            
+
             // Update beta
             if (score < beta) {
                 beta = score;
             }
         }
-        
-        
+
+
     }
-    
+
     return best_move;
 }
-
-
 
 
 
@@ -610,7 +625,7 @@ int bot_check_piece_color(int x, int y){
 void add_to_move_list(int x, int y, int to_x, int to_y, int en_pass, int *castling, int color, char current_piece, char captured_piece){
     int index;
     
-    index = move_list[0].count;
+    index = move_list[0].count+1;
     move_list[index].from_x = x;
     move_list[index].from_y = y;
     move_list[index].to_x = to_x;
@@ -1506,40 +1521,40 @@ int bot_check_for_castle(int color, int *castling){
     }
     
 }
-int bot_is_checkmate(int *castling){
+int bot_is_checkmate(int *castling, int color){
     
     int checkmate = 1;
     for (int i=0; i<8; i++){
         for (int j=0; j<8; j++){
-            if (turn_color == 1){
+            if (color == 1){
                 switch (bot_board[i][j]){
                     case 'k':
-                        if (!bot_king_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_king_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'p':
-                        if (!bot_pawn_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_pawn_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'n':
-                        if (!bot_knight_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_knight_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'b':
-                        if (!bot_bishop_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_bishop_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'r':
-                        if (!bot_rook_logic(i, j,turn_color, 1, castling)){
+                        if (!bot_rook_logic(i, j,color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'q':
-                        if (!bot_queen_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_queen_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
@@ -1549,32 +1564,32 @@ int bot_is_checkmate(int *castling){
             } else if (turn_color == 0){
                 switch (bot_board[i][j]){
                     case 'K':
-                        if (!bot_king_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_king_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'P':
-                        if (!bot_pawn_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_pawn_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'N':
-                        if (!bot_knight_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_knight_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'B':
-                        if (!bot_bishop_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_bishop_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'R':
-                        if (!bot_rook_logic(i, j,turn_color, 1, castling)){
+                        if (!bot_rook_logic(i, j,color, 1, castling)){
                             return 1;
                         }
                         break;
                     case 'Q':
-                        if (!bot_queen_logic(i, j, turn_color, 1, castling)){
+                        if (!bot_queen_logic(i, j, color, 1, castling)){
                             return 1;
                         }
                         break;
