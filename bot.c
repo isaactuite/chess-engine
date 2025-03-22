@@ -4,6 +4,7 @@
 #include <limits.h>
 #include "bot.h"
 #include <math.h>
+#include <stdlib.h>
 
 
 
@@ -61,6 +62,54 @@ void generate_moves(int color, int *castling, MoveList* move_list){
         }
     }
 }
+int score_move(Move move, int depth){
+    int score = 0;
+    int piece_values[128] = {0};  
+    
+    // Set specific values
+    piece_values['P'] = 100;
+    piece_values['p'] = 100;
+    piece_values['N'] = 320;
+    piece_values['n'] = 320;
+    piece_values['B'] = 330;
+    piece_values['b'] = 330;
+    piece_values['R'] = 500;
+    piece_values['r'] = 500;
+    piece_values['Q'] = 900;
+    piece_values['q'] = 900;
+    piece_values['K'] = 20000;  // Add king value for completeness
+    piece_values['k'] = 20000;
+
+    if (move.captured_piece != '.') {
+        score += 10 * piece_values[move.captured_piece] - piece_values[move.moved_piece];
+    }
+
+    if (move.moved_piece == 'P' && move.to_y == 0) {
+        score += 800;  // Queen promotion
+    }else if (move.moved_piece == 'p' && move.to_y == 7) {
+        score += 800;  // Queen promotion
+    }
+
+    // Center control for pawns
+    if ((move.moved_piece == 'P' || move.moved_piece == 'p') &&
+        (move.to_x >= 2 && move.to_x <= 5 && move.to_y >= 2 && move.to_y <= 5)) {
+        score += 50;
+    }
+
+    return score;
+}
+int compare_moves(const void* a, const void* b) {
+    Move* move_a = (Move*)a;
+    Move* move_b = (Move*)b;
+    
+    int score_a = score_move(*move_a, 0);
+    int score_b = score_move(*move_b, 0);
+    
+    return score_b - score_a;  // Descending order
+}
+void sort_moves(MoveList* move_list, int depth) {
+    qsort(move_list->moves, move_list->count, sizeof(Move), compare_moves);
+}
 
 void match_bot_board(){
     for (int i=0; i<8; i++){
@@ -95,69 +144,127 @@ int is_endgame(){
     }
     return piece_count<=14;
 }
-int piece_value(int i,int j){
-    int eval=0;
-    switch(bot_board[i][j]){
-        case 'P':
-        eval+=(100+pawn_pts[i][j]);
-        break;
-        case 'p':
-        eval-=(100+pawn_pts[i][7-j]);
-        break;
-        case 'N':
-        eval+=(300+knight_pts[i][j]);
-        break;
-        case 'B':
-        eval+=(300+bishop_pts[i][j]);
-        break;
-        case 'R':
-        eval+=(500+rook_pts[i][j]);
-        break;
-        case 'Q':
-        eval+=(900+queen_pts[i][7-j]);
-        break;
-        case 'n':
-        eval-=(300+knight_pts[i][7-j]);
-        break;
-        case 'b':
-        eval-=(300+bishop_pts[i][7-j]);
-        break;
-        case 'r':
-        eval-=(500+rook_pts[i][7-j]);
-        break;
-        case 'q':
-        eval-=(900+queen_pts[i][7-j]);
-        break;
-        case 'K':
-            if (is_endgame()){
-                eval+= king_pts_late[i][j];
-            } else{
-                eval+= king_pts_mid[i][j];
-            }
-            break;
-        case 'k':
-            if (is_endgame()){
-                eval-= king_pts_late[i][7-j];
-            } else{
-                eval-= king_pts_mid[i][7-j];
-            }
-            break;
-        default:
-        break;
-    }
+int piece_value(int i,int j, int endgame){
 
+    int eval=0;
+    if (bot_color==0){
+        switch(bot_board[i][j]){
+            case 'P':
+            eval+=(100+pawn_pts[i][j]);
+            break;
+            case 'p':
+            eval-=(100+pawn_pts[i][7-j]);
+            break;
+            case 'N':
+            eval+=(320+knight_pts[i][j]);
+            break;
+            case 'B':
+            eval+=(330+bishop_pts[i][j]);
+            break;
+            case 'R':
+            eval+=(500+rook_pts[i][j]);
+            break;
+            case 'Q':
+            eval+=(900+queen_pts[i][7-j]);
+            break;
+            case 'n':
+            eval-=(320+knight_pts[i][7-j]);
+            break;
+            case 'b':
+            eval-=(330+bishop_pts[i][7-j]);
+            break;
+            case 'r':
+            eval-=(500+rook_pts[i][7-j]);
+            break;
+            case 'q':
+            eval-=(900+queen_pts[i][7-j]);
+            break;
+            case 'K':
+                if (endgame){
+                    eval+= king_pts_late[i][j];
+                } else{
+                    eval+= king_pts_mid[i][j];
+                }
+                break;
+            case 'k':
+                if (endgame){
+                    eval-= king_pts_late[i][7-j];
+                } else{
+                    eval-= king_pts_mid[i][7-j];
+                }
+                break;
+            default:
+            break;
+        }
+
+        
+        return eval;
+    } else{
     
-    return eval;
+        switch(bot_board[i][j]){
+            case 'P':
+            eval-=(100+pawn_pts[i][j]);
+            break;
+            case 'p':
+            eval+=(100+pawn_pts[i][7-j]);
+            break;
+            case 'N':
+            eval-=(300+knight_pts[i][j]);
+            break;
+            case 'B':
+            eval-=(300+bishop_pts[i][j]);
+            break;
+            case 'R':
+            eval-=(500+rook_pts[i][j]);
+            break;
+            case 'Q':
+            eval-=(900+queen_pts[i][7-j]);
+            break;
+            case 'n':
+            eval+=(300+knight_pts[i][7-j]);
+            break;
+            case 'b':
+            eval+=(300+bishop_pts[i][7-j]);
+            break;
+            case 'r':
+            eval+=(500+rook_pts[i][7-j]);
+            break;
+            case 'q':
+            eval+=(900+queen_pts[i][7-j]);
+            break;
+            case 'K':
+                if (endgame){
+                    eval-= king_pts_late[i][j];
+                } else{
+                    eval-= king_pts_mid[i][j];
+                }
+                break;
+            case 'k':
+                if (endgame){
+                    eval+= king_pts_late[i][7-j];
+                } else{
+                    eval+= king_pts_mid[i][7-j];
+                }
+                break;
+            default:
+            break;
+        }
+
+        
+        return eval;
+        
+    }
 }
 int evaluate(){
     int eval = 0;
-    for (int i = 0; i<8; i++){
-        for (int j = 0; j<8; j++){
-            if (bot_board[i][j] != '.') {  // If there's a piece on this square
-                eval += piece_value(i, j);
+    int endgame = is_endgame();
+        for (int i = 0; i<8; i++){
+            for (int j = 0; j<8; j++){
+                if (bot_board[i][j] != '.') {  // If there's a piece on this square
+                    eval += piece_value(i, j,endgame);
+                }
             }
         }
-    }
     return eval;
 }
 
@@ -178,6 +285,8 @@ void make_move(Move s, int depth) {
             bot_board[5][7] = 'R';
             bot_board[7][7] = '.';
         }
+        bot_wking_x = s.to_x;
+        bot_wking_y = s.to_y;
     }
     else if (s.moved_piece == 'k') {
         if (s.from_x - s.to_x == 2) {
@@ -188,6 +297,8 @@ void make_move(Move s, int depth) {
             bot_board[5][0] = 'r';
             bot_board[7][0] = '.';
         }
+        bot_bking_x = s.to_x;
+        bot_bking_y = s.to_y;
     }
 
     //handle promotions
@@ -226,6 +337,8 @@ int unmake_move(Move s, int depth) {
             bot_board[7][7] = 'R';
             bot_board[5][7] = '.';
         }
+        bot_wking_x = s.from_x;
+        bot_wking_y = s.from_y;
     }
     else if (s.moved_piece == 'k') {
         if (s.from_x - s.to_x == 2) {
@@ -236,6 +349,8 @@ int unmake_move(Move s, int depth) {
             bot_board[7][0] = 'r';
             bot_board[5][0] = '.';
         }
+        bot_bking_x = s.from_x;
+        bot_bking_y = s.from_y;
     }
 
     if (s.moved_piece == 'P' && s.to_y == 0) {
@@ -316,6 +431,7 @@ void play_move(Move s) {
     // Normal move
     board[s.to_x][s.to_y] = board[s.from_x][s.from_y];
     board[s.from_x][s.from_y] = '.';
+    match_bot_board();
 }
 void update_castling_rights(Move move, int* castling) {
     // White king moved - lose both castling rights
@@ -353,7 +469,7 @@ void update_castling_rights(Move move, int* castling) {
 }
 void play_best_move(int color, int* castling) {
     printf("\nplay_best_move(%d, castling)", color);
-    int depth = 2; // Set search depth (tune for performance vs. strength)
+    int depth = 3; // Set search depth (tune for performance vs. strength)
 
     // Debug the initial state
     printf("\nInitial board state before move generation:");
@@ -362,39 +478,12 @@ void play_best_move(int color, int* castling) {
     int saved_castling[4];
     memcpy(saved_castling, castling, 4 * sizeof(int));
 
-    // Clear move list and generate moves first
-    move_list.count = 0;
-    generate_moves(color, castling, move_list);
-    printf("\nGenerated %d moves for color %d", move_list[0].count, color);
-
-    // Check if there are any moves
-    if (move_list[0].count == 0) {
-        printf("\nNo valid moves found!");
-        // Check if in checkmate or stalemate
-        if (bot_is_checkmate(castling, color)) {
-            printf("\nCheckmate! Game over.");
-        }
-        else {
-            printf("\nStalemate! Game drawn.");
-        }
-
-        return;
-    }
 
     // Choose best move
     Move best_move = alphaBetaMax(-2000000, 2000000, depth, 1, castling);
 
     // Restore castling rights before playing the move
     memcpy(castling, saved_castling, 4 * sizeof(int));
-
-    // Debug move info
-    printf("\nBest move:\nFrom: (%d,%d)\nTo:(%d,%d)\n"
-        "Moved Piece: '%c'\nCaptured Piece: '%c'\nScore: %d",
-        best_move.from_x, best_move.from_y,
-        best_move.to_x, best_move.to_y,
-        best_move.moved_piece, best_move.captured_piece,
-        best_move.score);
-
     // Play the move
     play_move(best_move);
 
@@ -433,9 +522,11 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling) 
     MoveList local_move_list = { .count = 0 };
     generate_moves(color, castling, &local_move_list);
 
+    sort_moves(&local_move_list, depthleft);
+
     // No moves - either checkmate or stalemate
     if (local_move_list.count == 0) {
-        if (bot_is_checkmate(castling, color)) {
+        if (bot_is_checkmate(castling, color, &local_move_list)) {
             best_move.score = -1000000;  // Checkmate is very bad for max player
         }
         else {
@@ -445,7 +536,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling) 
     }
 
     // Search through all legal moves
-    for (int i = 0; i < move_list[0].count; i++) {
+    for (int i = 0; i < local_move_list.count; i++) {
         Move current_move = local_move_list.moves[i];
 
 
@@ -454,7 +545,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling) 
         pushMove(current_move);
 
         // Recursively search for opponent's best response
-        Move response = alphaBetaMin(alpha, beta, depthleft - 1, 0, castling);
+        Move response = alphaBetaMin(alpha, beta, depthleft - 1, !color, castling);
         int score = response.score;
 
         // Unmake the move
@@ -481,7 +572,10 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling) 
                 alpha = score;
             }
         }
-
+        // Alpha-beta pruning
+        if (alpha >= beta) {
+            break;  // Beta cutoff
+        }
 
     }
 
@@ -513,10 +607,11 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling) 
     // Generate legal moves
     MoveList local_move_list = { .count = 0 };
     generate_moves(color, castling, &local_move_list);
+    sort_moves(&local_move_list, depthleft);
 
     // No moves - either checkmate or stalemate
-    if (&local_move_list.count == 0) {
-        if (bot_is_checkmate(castling, color)) {
+    if (local_move_list.count == 0) {
+        if (bot_is_checkmate(castling, color, &local_move_list)) {
             best_move.score = 1000000;  // Checkmate is very good for min player
         }
         else {
@@ -533,7 +628,7 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling) 
         pushMove(current_move);
 
         // Recursively search for opponent's best response
-        Move response = alphaBetaMax(alpha, beta, depthleft - 1, 1, castling);
+        Move response = alphaBetaMax(alpha, beta, depthleft - 1, !color, castling);
         int score = response.score;
 
         // Unmake the move
@@ -560,7 +655,9 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling) 
                 beta = score;
             }
         }
-
+        if (alpha >= beta) {
+            break;  // Alpha cutoff
+        }
 
     }
 
@@ -691,7 +788,7 @@ int bot_pawn_logic(int x, int y, int color, int mode, int *castling, MoveList* m
                     break;
                 //don't have to check for check here, because it's not a capture
                 } else {
-                    checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+                    checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
                 }
             
             }
@@ -699,24 +796,24 @@ int bot_pawn_logic(int x, int y, int color, int mode, int *castling, MoveList* m
         else if (y!=1){
             if (bot_check_piece_color(x, y+1) == 2){
 
-                checkmate = sim_move(x, y, x, y+1, color, 0, castling, mode);
+                checkmate = sim_move(x, y, x, y+1, color, 0, castling, mode, move_list);
             }
         }
         
 
         //checks for pawn captures
         if ((bot_check_piece_color(x-1, y+1) == 0) && ((x-1>=0)&&(y+1<8))){
-            checkmate = sim_move(x, y, x-1, y+1, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x-1, y+1, color, 0, castling, mode, move_list);
         }
         if ((bot_check_piece_color(x+1, y+1) == 0) && ((x+1<8)&&(y+1<8))){
-            checkmate = sim_move(x, y, x+1, y+1, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+1, y+1, color, 0, castling, mode, move_list);
         }
         
         if ((bot_en_passant_x == x+1)  && (bot_en_passant_y == y)){
-            checkmate = sim_move(x, y, x+1, y+1, color, 1, castling, mode);
+            checkmate = sim_move(x, y, x+1, y+1, color, 1, castling, mode, move_list);
         }
         if ((bot_en_passant_x == x-1)  && (bot_en_passant_y == y)){
-            checkmate = sim_move(x, y, x-1, y+1, color, 1, castling, mode);
+            checkmate = sim_move(x, y, x-1, y+1, color, 1, castling, mode, move_list);
         }
         
     
@@ -732,29 +829,29 @@ int bot_pawn_logic(int x, int y, int color, int mode, int *castling, MoveList* m
                     //if there is something blocking the pawns file movement, break
                     break;
                 } else {
-                    checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+                    checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
                 }
             
             }
         }else if (y!=6){
             if (bot_check_piece_color(x, y-1) == 2){
-                checkmate = sim_move(x, y, x, y-1, color, 0, castling, mode);
+                checkmate = sim_move(x, y, x, y-1, color, 0, castling, mode, move_list);
             }
         }
 
         //checks for pawn captures
         if ((bot_check_piece_color(x-1, y-1) == 1) && ((x-1>=0)&&(y-1>=0))){
-            checkmate = sim_move(x, y, x-1, y-1, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x-1, y-1, color, 0, castling, mode, move_list);
         }
         if ((bot_check_piece_color(x+1, y-1) == 1) && ((x+1<8)&&(y-1>=0))){
-            checkmate = sim_move(x, y, x+1, y-1, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+1, y-1, color, 0, castling, mode, move_list);
             
         }
         if ((bot_en_passant_x == x+1)  && (bot_en_passant_y == y)){
-            checkmate = sim_move(x, y, x+1, y-1, color, 1, castling, mode);
+            checkmate = sim_move(x, y, x+1, y-1, color, 1, castling, mode, move_list);
         }
         if ((bot_en_passant_x == x-1)  && (bot_en_passant_y == y)){
-            checkmate = sim_move(x, y, x-1, y-1, color, 1, castling, mode);
+            checkmate = sim_move(x, y, x-1, y-1, color, 1, castling, mode, move_list);
         }
     }
     if (mode == 1){
@@ -789,7 +886,7 @@ int bot_knight_logic(int x, int y, int color, int mode, int *castling, MoveList*
                 if (color == bot_check_piece_color(x+i, y+j)){
                     continue;
                 }
-                checkmate = sim_move(x, y, x+i, y+j, color, 0, castling, mode);
+                checkmate = sim_move(x, y, x+i, y+j, color, 0, castling, mode, move_list);
             }
         }
     }
@@ -814,10 +911,10 @@ int bot_rook_logic(int x, int y, int color, int mode,int *castling, MoveList* mo
             break;
         }
         if (bot_is_valid_attack(x+i, y, color)){
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
         }
     }
     //up
@@ -826,10 +923,10 @@ int bot_rook_logic(int x, int y, int color, int mode,int *castling, MoveList* mo
             break;
         }
         if (bot_is_valid_attack(x, y+j, color)){
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
         }    }
     //right
     for (int i=1; x+i<8; i++){
@@ -837,10 +934,10 @@ int bot_rook_logic(int x, int y, int color, int mode,int *castling, MoveList* mo
             break;
         }
         if (bot_is_valid_attack(x+i, y, color)){
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
         }
     }   
     //down
@@ -849,10 +946,10 @@ int bot_rook_logic(int x, int y, int color, int mode,int *castling, MoveList* mo
             break;
         }
         if (bot_is_valid_attack(x, y+j, color)){
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
         }    
     }
 
@@ -872,10 +969,10 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling, MoveList*
             break;
         }
         if (bot_is_valid_attack(x+i, y+i, color)){
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
         }
     }
     //right up
@@ -886,10 +983,10 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling, MoveList*
         
 
         if (bot_is_valid_attack(x+i, y-i, color)){
-            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode, move_list);
         }
     }
     //right down
@@ -898,10 +995,10 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling, MoveList*
             break;
         }
         if (bot_is_valid_attack(x+i, y+i, color)){
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
         }
     }
     //left down
@@ -910,10 +1007,10 @@ int bot_bishop_logic(int x, int y, int color, int mode, int *castling, MoveList*
             break;
         }
         if (bot_is_valid_attack(x-i, y+i, color)){
-            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode, move_list);
         }
     }
     if (mode == 1){
@@ -932,10 +1029,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x+i, y+i, color)){
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
         }
     }
     //right up
@@ -946,10 +1043,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
         
 
         if (bot_is_valid_attack(x+i, y-i, color)){
-            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y-i, color, 0, castling, mode, move_list);
         }
     }
     //right down
@@ -958,10 +1055,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x+i, y+i, color)){
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+i, color, 0, castling, mode, move_list);
         }
     }
     //left down
@@ -970,10 +1067,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x-i, y+i, color)){
-            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x-i, y+i, color, 0, castling, mode, move_list);
         }
     }
      //left
@@ -983,10 +1080,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x+i, y, color)){
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
         }
     }
     //up
@@ -995,10 +1092,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x, y+j, color)){
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
         }    
     }
     //right
@@ -1007,10 +1104,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x+i, y, color)){
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y, color, 0, castling, mode, move_list);
         }
     }   
     //down
@@ -1019,10 +1116,10 @@ int bot_queen_logic(int x, int y, int color, int mode, int *castling, MoveList* 
             break;
         }
         if (bot_is_valid_attack(x, y+j, color)){
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
             break;
         }else{
-            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
         }    
     }
     if (mode == 1){
@@ -1070,7 +1167,7 @@ int bot_king_logic(int x, int y, int color, int mode, int *castling, MoveList* m
                 bot_bking_x +=i;
                 bot_bking_y+=j;
             }
-            checkmate = sim_move(x, y, x+i, y+j, color, 0, castling, mode);
+            checkmate = sim_move(x, y, x+i, y+j, color, 0, castling, mode, move_list);
             if (color == 0){
                 bot_wking_x = bot_temp_king_x;
                 bot_wking_y=bot_temp_king_y;
@@ -1447,7 +1544,8 @@ int bot_check_for_castle(int color, int *castling, MoveList* move_list){
                         bot_board[3][7] = '.';
                         bot_wking_x = 2;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 7, 2, 7, 0, castling, color,'K', '.');
+                            castling[1] = 0;
+                            add_to_move_list(4, 7, 2, 7, 0, castling, color,'K', '.', move_list);
                         }
                     }
                 }
@@ -1467,7 +1565,8 @@ int bot_check_for_castle(int color, int *castling, MoveList* move_list){
                         bot_board[5][7] = '.';
                         bot_wking_x = 6;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 7, 6, 7, 0, castling, color,'K', '.');
+                            castling[0] = 0;
+                            add_to_move_list(4, 7, 6, 7, 0, castling, color,'K', '.', move_list);
                         }
                     }
                 }
@@ -1492,7 +1591,8 @@ int bot_check_for_castle(int color, int *castling, MoveList* move_list){
                         bot_board[3][0] = '.';
                         bot_bking_x = 2;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 0, 2, 0, 0, castling, color,'k', '.');
+                            castling[3] = 0;
+                            add_to_move_list(4, 0, 2, 0, 0, castling, color,'k', '.', move_list);
                         }
                     }
                 }
@@ -1512,7 +1612,8 @@ int bot_check_for_castle(int color, int *castling, MoveList* move_list){
                         bot_board[5][0] = '.';
                         bot_bking_x = 6;
                         if (!bot_search_from_king(color)){
-                            add_to_move_list(4, 0, 6, 0, 0, castling, color,'k', '.');
+                            castling[2] = 0;
+                            add_to_move_list(4, 0, 6, 0, 0, castling, color,'k', '.', move_list);
                         }
                     }
                 }

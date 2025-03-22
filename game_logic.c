@@ -956,10 +956,7 @@ int king_logic(int x, int y, int color, int mode){
         temp_king_x = bking_x;
         temp_king_y = bking_y;
     }
-    
-    memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
-    memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
-    
+
     int counter = 1;
     
     counter = check_for_castle(color, counter);

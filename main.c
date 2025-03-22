@@ -242,8 +242,6 @@ void handle_mouse_event(SDL_Event *e) {
                     update_fake_board();
                     match_bot_board();
 
-                    
-
                     // Clear highlight arrays
                     memset(highlighted_squares_x, -1, sizeof(highlighted_squares_x));
                     memset(highlighted_squares_y, -1, sizeof(highlighted_squares_y));
@@ -267,11 +265,18 @@ void handle_mouse_event(SDL_Event *e) {
                         printf("\nNOT CHECKMATE");
                     }
                     int castling_rights[4] = {castling_rights_KS, castling_rights_QS, castling_rights_ks, castling_rights_qs};
-                    play_best_move(1, castling_rights);
+                    play_best_move(bot_color, castling_rights);
                      // Redraw the board and pieces
-                     draw_board();
-                     draw_pieces();
-                     update_display();
+                    
+                    update_dynamic_board();
+                    update_fake_board();
+                    match_bot_board();
+                    // If click is not a legal move, deselect
+                    is_selected_piece = 0;
+                    draw_board();
+                    draw_pieces();
+                    update_display();
+                     turn_color = !turn_color;
                     return;
                 }
                 if (check_piece_color(clicked_x, clicked_y, 0) == turn_color) {
