@@ -12,7 +12,6 @@ extern int bot_king_search_help(int x, int y, int color, char piece_to_check1, c
 extern int bot_search_from_king(int color);
 extern int bot_check_for_castle(int color, int *castling);
 extern int bot_is_checkmate(int *castling, int color);
-extern void reset_moves();
 extern int bot_check_piece_color(int x, int y);
 extern Move alphaBetaRoot(int depth, int color, int *castling);
 extern Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling);

@@ -29,8 +29,12 @@ typedef struct {
     Move moves[300];
     int top;
 } MoveStack;
+
+typedef struct {
+    Move moves[256];
+    int count;
+} MoveList;
 extern MoveStack history;
-extern Move move_list[256];
 extern int* gFrameBuffer;
 extern SDL_Window* gSDLWindow;
 extern SDL_Renderer* gSDLRenderer;

@@ -68,7 +68,6 @@ int sim_counter = 1;
 #define MAX_MOVES 256
 
 
-Move move_list[MAX_MOVES];
 MoveStack history;
 
 char board[8][8] = {
