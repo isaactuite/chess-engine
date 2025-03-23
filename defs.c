@@ -67,6 +67,8 @@ int sim_counter = 1;
 
 #define MAX_MOVES 256
 
+Move killer_moves[MAX_DEPTH][2];
+int history_heuristic[8][8][8][8] = {0};
 
 MoveStack history;
 

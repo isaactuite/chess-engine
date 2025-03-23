@@ -71,6 +71,12 @@ extern int en_passant_y;
 extern int bot_en_passant_x;
 extern int bot_en_passant_y;
 
+#define MAX_DEPTH 64
+extern Move killer_moves[MAX_DEPTH][2];
+extern int history_heuristic[8][8][8][8];
+
+
+
 extern int flipped;
 extern int is_selected_piece;
 extern int bking_x;

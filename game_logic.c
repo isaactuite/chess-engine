@@ -946,16 +946,10 @@ int queen_logic(int x, int y, int color, int mode){
 }
 int king_logic(int x, int y, int color, int mode){
 
- 
-    int temp_king_x;
-    int temp_king_y;
-    if (color == 0){
-        temp_king_x = wking_x;
-        temp_king_y = wking_y;
-    } else if (color == 1){
-        temp_king_x = bking_x;
-        temp_king_y = bking_y;
-    }
+    int temp_wking_x = wking_x;
+    int temp_wking_y = wking_y;
+    int temp_bking_x = bking_x;
+    int temp_bking_y = bking_y;
 
     int counter = 1;
     
@@ -978,15 +972,15 @@ int king_logic(int x, int y, int color, int mode){
                 continue;
             }
             if (color == 0){
+                fake_board[wking_x][wking_y] = 'K';
+                fake_board[temp_wking_x][temp_wking_y] = '.';
                 wking_x +=i;
                 wking_y+=j;
-                fake_board[wking_x][wking_y] = 'K';
-                fake_board[temp_king_x][temp_king_y] = '.';
             } else if (color == 1){
+                fake_board[bking_x][bking_y] = 'k';
+                fake_board[temp_wking_x][temp_wking_y] = '.';
                 bking_x +=i;
                 bking_y+=j;
-                fake_board[bking_x][bking_y] = 'k';
-                fake_board[temp_king_x][temp_king_y] = '.';
             }
             if (search_from_king(color) == 0){
                 if (is_valid_attack(x + i, y + j, color)){
@@ -998,16 +992,16 @@ int king_logic(int x, int y, int color, int mode){
                 }
             }
             if (color == 0){
-                fake_board[wking_x][wking_y] = board[wking_x][wking_y];
-                fake_board[temp_king_x][temp_king_y] = board[temp_king_x][temp_king_y];
-                wking_x = temp_king_x;
-                wking_y=temp_king_y;
+                fake_board[wking_x][wking_y] = board[temp_wking_x][temp_wking_y];
+                fake_board[temp_wking_x][temp_wking_y] = board[wking_x][wking_y];
+                wking_x = temp_wking_x;
+                wking_y=temp_wking_y;
                 
             } else if (color == 1){
-                fake_board[bking_x][bking_y] = board[bking_x][bking_y];
-                fake_board[temp_king_x][temp_king_y] = board[temp_king_x][temp_king_y];
-                bking_x =temp_king_x;
-                bking_y=temp_king_y;
+                fake_board[bking_x][bking_y] = board[temp_bking_x][temp_bking_y];
+                fake_board[temp_bking_x][temp_bking_y] = board[bking_x][bking_y];
+                bking_x =temp_bking_x;
+                bking_y=temp_bking_y;
             }
         }
     }
@@ -1405,8 +1399,8 @@ int check_for_castle(int color, int counter){
                         }
                     }
                 }
-                fake_board[3][7] = '.';
-                fake_board[2][7] = '.';
+                fake_board[5][7] = '.';
+                fake_board[6][7] = '.';
                 fake_board[4][7] = 'K';
             }
         }
@@ -1452,8 +1446,8 @@ int check_for_castle(int color, int counter){
                         }
                     }
                 }
-                fake_board[3][0] = '.';
-                fake_board[2][0] = '.';
+                fake_board[5][0] = '.';
+                fake_board[6][0] = '.';
                 fake_board[4][0] = 'K';
             }
         }
