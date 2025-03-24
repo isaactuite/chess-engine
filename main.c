@@ -82,6 +82,41 @@ void update_dynamic_board(){
     }
 }
 
+// Function to load the checkmate image
+bool loadCheckmateImage(SDL_Renderer* renderer) {
+    SDL_Surface* surface = SDL_LoadBMP("checkmate.png"); // Or use SDL_Image for PNG support
+    if (!surface) {
+        printf("Failed to load checkmate image: %s\n", SDL_GetError());
+        return false;
+    }
+    
+    checkmateTexture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_DestroySurface(surface);
+    
+    if (!checkmateTexture) {
+        printf("Failed to create texture from checkmate image: %s\n", SDL_GetError());
+        return false;
+    }
+    
+    return true;
+}
+
+// Function to display the checkmate image
+void displayCheckmateImage(SDL_Renderer* renderer) {
+    if (checkmateTexture) {
+        // Set the destination rectangle for the image
+        SDL_FRect destRect = {
+            .x = (WINDOW_WIDTH - 300) / 2.0f,  // Center horizontally
+            .y = (WINDOW_HEIGHT - 150) / 2.0f, // Center vertically
+            .w = 300.0f,                     // Width of your image
+            .h = 150.0f                      // Height of your image
+        };
+        
+        // Render the texture
+        SDL_RenderTexture(renderer, checkmateTexture, NULL, &destRect);
+    }
+}
+
 
 void select_square(float x, float y) {
     // Ensure the click is within the bounds of the board
@@ -121,9 +156,7 @@ int check_en_passant(int selected_y, int clicked_y){
         return 0;
     }
 }
-void ending_graphic(){
-    return;
-}
+
 
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -231,10 +264,14 @@ void handle_mouse_event(SDL_Event *e) {
                     if (board[clicked_x][clicked_y] == 'K'){
                         wking_x = clicked_x;
                         wking_y = clicked_y;
+                        bot_wking_x = wking_x;
+                        bot_wking_y = wking_y;
                         printf("\n (wking_x,wking_y) = (%d,%d)", wking_x, wking_y);
                     } else if (board[clicked_x][clicked_y] == 'k'){
                         bking_x = clicked_x;
                         bking_y = clicked_y;
+                        bot_bking_x = bking_x;
+                        bot_bking_y = bking_y;
                         printf("\n (bking_x,bking_y) = (%d,%d)", bking_x, bking_y);
                         
                     }
@@ -258,20 +295,13 @@ void handle_mouse_event(SDL_Event *e) {
                     selected_x = -1;
                     selected_y = -1;
                     is_selected_piece = 0;
-                    if (!is_checkmate()){
-                        ending_graphic();
-                        printf("\nCHECKMATE");
-                    } else{
-                        printf("\nNOT CHECKMATE");
-                    }
+
                     int castling_rights[4] = {castling_rights_KS, castling_rights_QS, castling_rights_ks, castling_rights_qs};
                     play_best_move(bot_color, castling_rights);
-                     // Redraw the board and pieces
                     
                     update_dynamic_board();
                     update_fake_board();
                     match_bot_board();
-                    // If click is not a legal move, deselect
                     is_selected_piece = 0;
                     draw_board();
                     draw_pieces();
@@ -319,6 +349,9 @@ void cleanup_pieces() {
         if (pieces[i].texture) {
             SDL_DestroyTexture(pieces[i].texture);
         }
+    }
+    if (checkmateTexture) {
+        SDL_DestroyTexture(checkmateTexture);
     }
 }
 void resize_window(int width, int height) {

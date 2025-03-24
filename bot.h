@@ -13,13 +13,8 @@ extern int bot_search_from_king(int color);
 extern int bot_check_for_castle(int color, int *castling, MoveList* move_list);
 extern int bot_is_checkmate(int *castling, int color, MoveList* move_list);
 extern int bot_check_piece_color(int x, int y);
-extern Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling);
-extern Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling);
-extern Move quiesce(int alpha, int beta, int color, int* castling, int depth);
-extern void generate_noisy_moves(int color, int* castling, MoveList* move_list);
-extern bool is_promotion(Move m);
-extern bool causes_check(Move m, int *castling);
-extern bool get_piece_color(char piece);
+extern Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int *castling, MoveList* move_list1);
+extern Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int *castling, MoveList* move_list1);
 extern int is_endgame();
 
 #endif

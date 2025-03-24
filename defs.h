@@ -39,6 +39,7 @@ extern int* gFrameBuffer;
 extern SDL_Window* gSDLWindow;
 extern SDL_Renderer* gSDLRenderer;
 extern SDL_Texture* gSDLTexture;
+extern SDL_Texture* checkmateTexture;
 extern int gDone;
 
 extern int WINDOW_WIDTH;

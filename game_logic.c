@@ -33,7 +33,7 @@ void highlight_legal_moves(int x, int y) {
     }
     
     // Check if this is a valid attack target
-    if (is_valid_attack(x, y, check_piece_color(selected_x, selected_y, 0))) {
+    if (is_valid_attack(real(x), real(y), check_piece_color(real(selected_x), real(selected_y), 0))) {
         // Draw a circle outline around the piece for attack targets
         int center_x = board_x + SQUARE_SIZE / 2;
         int center_y = board_y + SQUARE_SIZE / 2;
@@ -950,7 +950,15 @@ int king_logic(int x, int y, int color, int mode){
     int temp_wking_y = wking_y;
     int temp_bking_x = bking_x;
     int temp_bking_y = bking_y;
-
+    if (color == 0){
+        if (temp_wking_x!=x || temp_wking_y!=y){
+            printf("Thinks king is at (%d,%d)",temp_wking_x, temp_wking_y);
+        }
+    }else if (color == 1){
+        if (temp_bking_x!=x || temp_bking_y!=y){
+            printf("Thinks king is at (%d,%d)",temp_bking_x, temp_bking_y);
+        }
+    }
     int counter = 1;
     
     counter = check_for_castle(color, counter);
@@ -964,7 +972,7 @@ int king_logic(int x, int y, int color, int mode){
                 continue;
             }
             
-            if((j == i) &&(j == 0)){
+            if(i == 0 && j == 0){
                 continue;
             
             }
@@ -972,34 +980,37 @@ int king_logic(int x, int y, int color, int mode){
                 continue;
             }
             if (color == 0){
-                fake_board[wking_x][wking_y] = 'K';
-                fake_board[temp_wking_x][temp_wking_y] = '.';
+                
                 wking_x +=i;
                 wking_y+=j;
-            } else if (color == 1){
-                fake_board[bking_x][bking_y] = 'k';
+                fake_board[wking_x][wking_y] = 'K';
                 fake_board[temp_wking_x][temp_wking_y] = '.';
+            } else if (color == 1){
                 bking_x +=i;
                 bking_y+=j;
+                fake_board[bking_x][bking_y] = 'k';
+                fake_board[temp_wking_x][temp_wking_y] = '.';
             }
             if (search_from_king(color) == 0){
                 if (is_valid_attack(x + i, y + j, color)){
+                    printf("highlighted_squares(%d, %d)", x+i, y+j);
                     highlighted_squares(x+i, y+j, counter);
                     counter++;
                 } else if (check_piece_color(x+i, y+j, 0)==2){
+                    printf("\n\nhighlighted_squares(%d, %d)", x+i, y+j);
                     highlighted_squares(x+i, y+j, counter);
                     counter++;
                 }
             }
             if (color == 0){
-                fake_board[wking_x][wking_y] = board[temp_wking_x][temp_wking_y];
-                fake_board[temp_wking_x][temp_wking_y] = board[wking_x][wking_y];
+                fake_board[wking_x][wking_y] = board[wking_x][wking_y];
+                fake_board[temp_wking_x][temp_wking_y] = board[temp_wking_x][temp_wking_y];
                 wking_x = temp_wking_x;
-                wking_y=temp_wking_y;
+                wking_y = temp_wking_y;
                 
             } else if (color == 1){
-                fake_board[bking_x][bking_y] = board[temp_bking_x][temp_bking_y];
-                fake_board[temp_bking_x][temp_bking_y] = board[bking_x][bking_y];
+                fake_board[bking_x][bking_y] = board[bking_x][bking_y];
+                fake_board[temp_bking_x][temp_bking_y] = board[temp_bking_x][temp_bking_y];
                 bking_x =temp_bking_x;
                 bking_y=temp_bking_y;
             }
@@ -1021,14 +1032,6 @@ int king_logic(int x, int y, int color, int mode){
 }
 int search_from_king(int color){
     int decision;
-    for (int i=0; i<8; i++){
-        for (int j=0; j<8; j++){
-        }
-    } 
-    for (int i=0; i<8; i++){
-        for (int j=0; j<8; j++){
-        }
-    } 
     if (color==0){
         //left up
         for (int i=-1; wking_x+i>-1 && wking_y+i>-1; i--){
@@ -1146,7 +1149,7 @@ int search_from_king(int color){
                 continue;
             }
             for (int j =-1; j<2;j++){
-                if (wking_x+j>=8 ||wking_x+j<0){
+                if (wking_y+j>=8 ||wking_y+j<0){
                     continue;
                 }
                         
@@ -1412,11 +1415,11 @@ int check_for_castle(int color, int counter){
         if (castling_rights_qs){
             if (board[3][0] == '.' && board[2][0] == '.' && board[1][0] == '.' &&board[0][0] == 'r'){
                 if (!search_from_king(color)){
-                    fake_board[3][0] = 'K';
+                    fake_board[3][0] = 'k';
                     fake_board[4][0] = '.';
                     bking_x = 3;
                     if (!search_from_king(color)){
-                        fake_board[2][0] = 'K';
+                        fake_board[2][0] = 'k';
                         fake_board[3][0] = '.';
                         bking_x = 2;
                         if (!search_from_king(color)){
@@ -1427,17 +1430,17 @@ int check_for_castle(int color, int counter){
                 }
                 fake_board[3][0] = '.';
                 fake_board[2][0] = '.';
-                fake_board[4][0] = 'K';
+                fake_board[4][0] = 'k';
             }
         }
         if (castling_rights_ks){
             if (board[5][0] == '.' && board[6][0] == '.' && board[7][0] == 'r'){
                 if (!search_from_king(color)){
-                    fake_board[5][0] = 'K';
+                    fake_board[5][0] = 'k';
                     fake_board[4][0] = '.';
                     bking_x = 5;
                     if (!search_from_king(color)){
-                        fake_board[6][0] = 'K';
+                        fake_board[6][0] = 'k';
                         fake_board[5][0] = '.';
                         bking_x = 6;
                         if (!search_from_king(color)){
@@ -1448,7 +1451,7 @@ int check_for_castle(int color, int counter){
                 }
                 fake_board[5][0] = '.';
                 fake_board[6][0] = '.';
-                fake_board[4][0] = 'K';
+                fake_board[4][0] = 'k';
             }
         }
         bking_x = temp_bking_x;
