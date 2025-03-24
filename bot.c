@@ -245,11 +245,11 @@ int evaluate_checkmate_patterns(MoveList* move_list, int color, int endgame){
     int x;
     int y;
     if (color == 0){
-        x = bot_bking_x;
-        y = bot_bking_y;
-    }else{
         x = bot_wking_x;
         y = bot_wking_y;
+    }else{
+        x = bot_bking_x;
+        y = bot_bking_y;
     }
     for(int i=0; i<move_list->count; i++){
         for(int i = -1;i<2; i++){
@@ -272,11 +272,12 @@ int evaluate_checkmate_patterns(MoveList* move_list, int color, int endgame){
             }
         }
     }
-    eval+= attackers*attackers*15;
+    eval-= attackers*attackers*15;
 
     if (endgame){
         eval += king_count_legal_moves(color);
     }
+    return eval;
 
 }
 int open_file(int x, int y, char piece){
@@ -520,16 +521,16 @@ int piece_value(int i,int j, int endgame){
             break;
             case 'K':
                 if (endgame){
-                    eval-= (10000+king_pts_late[i][j]);
+                    eval-= (king_pts_late[i][j]);
                 } else{
-                    eval-= (10000+king_pts_mid[i][j]);
+                    eval-= (king_pts_mid[i][j]);
                 }
                 break;
             case 'k':
                 if (endgame){
-                    eval+= (10000+king_pts_late[i][7-j]);
+                    eval+= (king_pts_late[i][7-j]);
                 } else{
-                    eval+= (10000+king_pts_mid[i][7-j]);
+                    eval+= (king_pts_mid[i][7-j]);
                 }
                 break;
             default:
