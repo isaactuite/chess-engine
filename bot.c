@@ -460,16 +460,16 @@ int piece_value(int i,int j, int endgame){
             break;
             case 'K':
                 if (endgame){
-                    eval+= (10000+king_pts_late[i][j]);
+                    eval+= (king_pts_late[i][j]);
                 } else{
-                    eval+= (10000+king_pts_mid[i][j]);
+                    eval+= (king_pts_mid[i][j]);
                 }
                 break;
             case 'k':
                 if (endgame){
-                    eval-= (10000+king_pts_late[i][7-j]);
+                    eval-= (king_pts_late[i][7-j]);
                 } else{
-                    eval-= (10000+king_pts_mid[i][7-j]);
+                    eval-= (king_pts_mid[i][7-j]);
                 }
                 break;
             default:
