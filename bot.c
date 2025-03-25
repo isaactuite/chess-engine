@@ -393,13 +393,13 @@ int are_rooks_doubled(int x, int y){
     //up
     for (int j=-1; y+j>-1;j--){
         if (bot_board[x][y+j] == bot_board[x][y]){
-            return 25;
+            return 15;
         }
     }
     //down
     for (int j=1; y+j<8;j++){
         if (bot_board[x][y+j] == bot_board[x][y]){
-            return 25;
+            return 15;
         }
     }
     return 0;
@@ -460,16 +460,16 @@ int piece_value(int i,int j, int endgame){
             break;
             case 'K':
                 if (endgame){
-                    eval+= (10000+king_pts_late[i][j]);
+                    eval+= (king_pts_late[i][j]);
                 } else{
-                    eval+= (10000+king_pts_mid[i][j]);
+                    eval+= (king_pts_mid[i][j]);
                 }
                 break;
             case 'k':
                 if (endgame){
-                    eval-= (10000+king_pts_late[i][7-j]);
+                    eval-= (king_pts_late[i][7-j]);
                 } else{
-                    eval-= (10000+king_pts_mid[i][7-j]);
+                    eval-= (king_pts_mid[i][7-j]);
                 }
                 break;
             default:
@@ -715,6 +715,7 @@ void play_move(Move s) {
         if (s.from_x - s.to_x == 2) { // Queen-side castling
             board[3][7] = 'R';
             board[0][7] = '.';
+
         }
         else if (s.from_x - s.to_x == -2) { // King-side castling
             board[5][7] = 'R';
@@ -805,10 +806,16 @@ void update_castling_rights(Move move, int* castling) {
             castling[3] = 0;
         }
     }
+
+    castling_rights_KS = castling[0];
+    castling_rights_QS = castling[1];
+    castling_rights_ks = castling[2];
+    castling_rights_qs = castling[3];
+
 }
 void play_best_move(int color, int* castling) {
     printf("Castling: (%d,%d,%d,%d)", castling[0], castling[1], castling[2], castling[3]);
-    int depth = 7; // Set search depth (tune for performance vs. strength)
+    int depth = 5; // Set search depth (tune for performance vs. strength)
     MoveList move_list1;
     // Choose best move
     Move best_move = alphaBetaMax(-2000000, 2000000, depth, 1, castling, &move_list1);
@@ -861,16 +868,6 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling, 
 
     sort_moves(&local_move_list, depthleft);
 
-    // No moves - either checkmate or stalemate
-    if (local_move_list.count == 0) {
-        if (bot_is_checkmate(castling, color, &local_move_list) ==0) {
-            best_move.score = 1000000 + depthleft*1000;  // Checkmate is very bad for max player
-        }
-        else if (bot_is_checkmate(castling, color, &local_move_list) ==2){
-            best_move.score = 0;         // Stalemate is a draw
-        }
-        return best_move;
-    }
 
     // Search through all legal moves
     for (int i = 0; i < local_move_list.count; i++) {
@@ -883,6 +880,16 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling, 
 
         // Recursively search for opponent's best response
         Move response = alphaBetaMin(alpha, beta, depthleft - 1, !color, castling, &local_move_list);
+
+        if (local_move_list.count == 0) {
+            if (bot_is_checkmate(castling, color, &local_move_list) ==0) {
+                response.score = -1000001 - depthleft*1000;  // Checkmate is very bad for max player
+            }
+            else if (bot_is_checkmate(castling, color, &local_move_list) ==2){
+                response.score = 0;         // Stalemate is a draw
+            }
+        }
+
         int score = response.score;
 
         // Unmake the move
@@ -911,6 +918,11 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling, 
             best_move.en_pass_x = current_move.en_pass_x;
             best_move.en_pass_y = current_move.en_pass_y;
             best_move.score = score;
+            best_move.castling[0] = castling[0];
+            best_move.castling[1] = castling[1];
+            best_move.castling[2] = castling[2];
+            best_move.castling[3] = castling[3];
+
 
             // Update alpha
             if (score > alpha) {
@@ -964,16 +976,7 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling, 
     generate_moves(color, castling, &local_move_list);
     sort_moves(&local_move_list, depthleft);
 
-    // No moves - either checkmate or stalemate
-    if (local_move_list.count == 0) {
-        if (bot_is_checkmate(castling, color, &local_move_list) == 0) {
-            best_move.score = -1000000 - depthleft*1000;  // Checkmate is very bad for max player
-        }
-        else if (bot_is_checkmate(castling, color, &local_move_list) == 2){
-            best_move.score = 0;         // Stalemate is a draw
-        }
-        return best_move;
-    }
+    
 
     // Search through all legal moves
     for (int i = 0; i < local_move_list.count; i++) {
@@ -985,6 +988,16 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling, 
 
         // Recursively search for opponent's best response
         Move response = alphaBetaMax(alpha, beta, depthleft - 1, !color, castling, &local_move_list);
+
+        if (local_move_list.count == 0) {
+            if (bot_is_checkmate(castling, color, &local_move_list) ==0) {
+                response.score =+1000001 + depthleft*1000;  // Checkmate is very bad for max player
+            }
+            else if (bot_is_checkmate(castling, color, &local_move_list) ==2){
+                response.score = 0;         // Stalemate is a draw
+            }
+        }
+
         int score = response.score;
 
         // Unmake the move
@@ -1013,6 +1026,11 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling, 
             best_move.en_pass_x = current_move.en_pass_x;
             best_move.en_pass_y = current_move.en_pass_y;
             best_move.score = score;
+            best_move.castling[0] = castling[0];
+            best_move.castling[1] = castling[1];
+            best_move.castling[2] = castling[2];
+            best_move.castling[3] = castling[3];
+            
             // Update beta
             if (score < beta) {
                 beta = score;
@@ -1223,6 +1241,7 @@ int bot_pawn_logic(int x, int y, int color, int mode, int *castling, MoveList* m
     }
 
 }
+
 int bot_knight_logic(int x, int y, int color, int mode, int *castling, MoveList* move_list){
     int checkmate = 0;
 
