@@ -160,7 +160,20 @@ int check_en_passant(int selected_y, int clicked_y){
 
 void handle_mouse_event(SDL_Event *e) {
     if (e->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-        
+        if (bot_color == 0 && turn_count== 0){
+            flip_board();
+            int castling[4] = {1,1,1,1};
+            play_best_move(bot_color, castling);
+            update_dynamic_board();
+            update_fake_board();
+            match_bot_board();
+            draw_board();
+            draw_pieces();
+            update_display();
+            turn_color = !turn_color;
+            turn_count++;
+            return;
+        }
         int clicked_x = real(get_tile_x(e->button.x));
         int clicked_y = real(get_tile_y(e->button.y));
         
@@ -287,7 +300,7 @@ void handle_mouse_event(SDL_Event *e) {
                     draw_board();
                     draw_pieces();
                     update_display();
-
+                    turn_count++;
                     // Switch player turn
                     turn_color = !turn_color;
 
@@ -306,7 +319,9 @@ void handle_mouse_event(SDL_Event *e) {
                     draw_board();
                     draw_pieces();
                     update_display();
+                    turn_count++;
                      turn_color = !turn_color;
+
                     return;
                 }
                 if (check_piece_color(clicked_x, clicked_y, 0) == turn_color) {
@@ -491,6 +506,7 @@ int update(void) {
             update_display();
         }
         if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN || e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+            
             handle_mouse_event(&e);
         }
         if (e.type == SDL_EVENT_KEY_DOWN){
@@ -519,8 +535,8 @@ int main(int argc, char** argv) {
         bot_color = 1;
     } else if (player_color == 1){
         bot_color = 0;
-        flipped = 1;
     }
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
         SDL_Log("Failed to initialize SDL: %s", SDL_GetError());
         return -1;
@@ -568,7 +584,7 @@ int main(int argc, char** argv) {
     load_pieces();
     draw_board();
     update_display();
-
+    
 
     gDone = 0;
     #ifdef EMSCRIPTEN

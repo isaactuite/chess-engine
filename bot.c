@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "defs.h"
-#include <limits.h>
 #include "bot.h"
 #include <math.h>
 #include <stdlib.h>
@@ -91,24 +90,24 @@ int score_move(Move move, int depth){
     piece_values['r'] = 500;
     piece_values['Q'] = 900;
     piece_values['q'] = 900;
-    piece_values['K'] = 20000;  // Add king value for completeness
+    piece_values['K'] = 20000; 
     piece_values['k'] = 20000;
 
 
     if ((move.moved_piece == 'K' || move.moved_piece == 'k') && 
         (abs(move.from_x - move.to_x) == 2) && !is_endgame()) {
-        score += 200;  // Castling is valuable
+        score += 200;  
     }
     if (move.captured_piece == '.' && !(move.moved_piece == 'P' && (move.to_y == 0 || move.to_y == 7))) {
-        score -= 10;  // Slight penalty for quiet moves
+        score -= 10;  
     }
     if (move.captured_piece != '.') {
         score += piece_values[move.captured_piece] - piece_values[move.moved_piece] + 1000;
     }
     if (move.moved_piece == 'P' && move.to_y == 0) {
-        score += 800;  // Queen promotion
+        score += 800; 
     }else if (move.moved_piece == 'p' && move.to_y == 7) {
-        score += 800;  // Queen promotion
+        score += 800; 
     }
     score += history_heuristic[move.from_x][move.from_y][move.to_x][move.to_y];
 
@@ -116,10 +115,10 @@ int score_move(Move move, int depth){
         killer_moves[depth][0].to_x == move.to_x) ||
        (killer_moves[depth][1].from_x == move.from_x &&
         killer_moves[depth][1].to_x == move.to_x)) {
-       score += 900;  // High bonus for killer moves
+       score += 900; 
    }
 
-    // Center control for pawns
+  
     if ((move.moved_piece == 'P' || move.moved_piece == 'p') &&
         (move.to_x >= 2 && move.to_x <= 5 && move.to_y >= 2 && move.to_y <= 5)) {
         score += 50;
@@ -272,8 +271,10 @@ int evaluate_checkmate_patterns(MoveList* move_list, int color, int endgame){
             }
         }
     }
+    if (attackers>0){
+        printf("Attackers: %d", attackers);
+    }
     eval-= attackers*attackers*15;
-
     if (endgame){
         eval += king_count_legal_moves(color);
     }
@@ -372,6 +373,7 @@ int passed_pawn(int x, int y, char piece){
             }
             
         }
+
         return 8*(7-y);
     } else if(piece == 'p'){
         for (int j = y+1; j<7; j++){
@@ -627,7 +629,6 @@ void make_move(Move s, int depth) {
     }
     
 }
-
 int unmake_move(Move s, int depth) {
     // First, restore the moved piece to its original position
     bot_board[s.from_x][s.from_y] = s.moved_piece;
@@ -815,10 +816,10 @@ void update_castling_rights(Move move, int* castling) {
 }
 void play_best_move(int color, int* castling) {
     printf("Castling: (%d,%d,%d,%d)", castling[0], castling[1], castling[2], castling[3]);
-    int depth = 5; // Set search depth (tune for performance vs. strength)
+    int depth = 3; // Set search depth (tune for performance vs. strength)
     MoveList move_list1;
     // Choose best move
-    Move best_move = alphaBetaMax(-2000000, 2000000, depth, 1, castling, &move_list1);
+    Move best_move = alphaBetaMax(-2000000, 2000000, depth, color, castling, &move_list1);
 
 
     // Play the move
@@ -929,7 +930,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling, 
                 alpha = score;
             }
         }
-        // Alpha-beta pruning
+        //Alpha-beta pruning
         if (alpha >= beta) {
             store_killer_move(local_move_list.moves[i], depthleft);
             update_history(local_move_list.moves[i], depthleft);
@@ -1168,6 +1169,7 @@ int bot_pawn_logic(int x, int y, int color, int mode, int *castling, MoveList* m
                 } else {
                     checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
                     
+                    
                 }
             
             }
@@ -1209,6 +1211,7 @@ int bot_pawn_logic(int x, int y, int color, int mode, int *castling, MoveList* m
                     break;
                 } else {
                     checkmate = sim_move(x, y, x, y+j, color, 0, castling, mode, move_list);
+                    
                 }
             
             }

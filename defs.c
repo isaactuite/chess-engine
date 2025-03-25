@@ -36,7 +36,7 @@ int player_color = -1;
 
 
 
-int turn_count = 0; //pair values
+int turn_count = 0;
 
 int en_passant_x = -1;
 int en_passant_y = -1;
