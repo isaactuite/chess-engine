@@ -707,7 +707,7 @@ void play_move(Move s) {
     //    s.castling[0], s.castling[1], s.castling[2], s.castling[3], s.en_pass_x, s.en_pass_y, s.score, bot_wking_x, bot_wking_y, bot_bking_x,bot_bking_y);
     // Handle en passant
     if (s.en_pass_x != -1) {
-        board[s.en_pass_x][s.from_y] = '.';
+        board[s.en_pass_x][s.en_pass_y] = '.';
     }
 
     // Handle castling
