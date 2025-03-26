@@ -109,6 +109,7 @@ int score_move(Move move, int depth){
     }else if (move.moved_piece == 'p' && move.to_y == 7) {
         score += 800; 
     }
+
     score += history_heuristic[move.from_x][move.from_y][move.to_x][move.to_y];
 
     if ((killer_moves[depth][0].from_x == move.from_x &&
@@ -259,7 +260,6 @@ int evaluate_checkmate_patterns(MoveList* move_list, int color, int endgame){
                 if (y+j>=8 ||y+j<0){
                     continue;
                 }
-                
                 if((j == i) &&(j == 0)){
                     continue;
                 
@@ -816,7 +816,7 @@ void update_castling_rights(Move move, int* castling) {
 }
 void play_best_move(int color, int* castling) {
     printf("Castling: (%d,%d,%d,%d)", castling[0], castling[1], castling[2], castling[3]);
-    int depth = 3; // Set search depth (tune for performance vs. strength)
+    int depth = 6; // Set search depth (tune for performance vs. strength)
     MoveList move_list1;
     // Choose best move
     Move best_move = alphaBetaMax(-2000000, 2000000, depth, color, castling, &move_list1);
@@ -889,6 +889,7 @@ Move alphaBetaMax(int alpha, int beta, int depthleft, int color, int* castling, 
             else if (bot_is_checkmate(castling, color, &local_move_list) ==2){
                 response.score = 0;         // Stalemate is a draw
             }
+            return response;
         }
 
         int score = response.score;
@@ -992,11 +993,13 @@ Move alphaBetaMin(int alpha, int beta, int depthleft, int color, int* castling, 
 
         if (local_move_list.count == 0) {
             if (bot_is_checkmate(castling, color, &local_move_list) ==0) {
-                response.score =+1000001 + depthleft*1000;  // Checkmate is very bad for max player
+                response.score = 1000001 + depthleft * 1000;
             }
+
             else if (bot_is_checkmate(castling, color, &local_move_list) ==2){
                 response.score = 0;         // Stalemate is a draw
             }
+            return response;
         }
 
         int score = response.score;
