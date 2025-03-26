@@ -822,6 +822,7 @@ void play_best_move(int color, int* castling) {
     Move best_move = alphaBetaMax(-2000000, 2000000, depth, color, castling, &move_list1);
 
 
+    
     // Play the move
     play_move(best_move);
 
